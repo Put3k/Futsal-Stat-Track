@@ -18,5 +18,3 @@ class Match(models.Model):
 
     def __str__(self):
         return f"Matchday {self.date.strftime('%d.%m.%Y')}"
-
-
