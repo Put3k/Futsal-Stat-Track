@@ -1,4 +1,6 @@
 from django.db import models
+from django.db.models.signals import post_save, post_delete
+from django.dispatch import receiver
 from django.core.exceptions import ValidationError
 from datetime import datetime
 
@@ -62,18 +64,6 @@ class Match(models.Model):
         if self.home_goals < 0 or self.away_goals < 0:
             raise ValidationError("Goals scored cannot be negative.")
 
-    def save(self, *args, **kwargs):
-        self.matchday.match_counter += 1
-        self.match_in_matchday = self.matchday.match_counter
-        self.matchday.save()
-        super(Match, self).save(*args, **kwargs)
-
-    def delete(self, *args, **kwargs):
-        self.matchday.match_counter -= 1
-        self.matchday.save()
-        print("Deleted")
-        super(Match, self).delete(*args, **kwargs)
-
     def __str__(self):
         return f"{self.match_in_matchday}-{self.matchday.date.strftime('%d-%m-%Y')}-{self.team_home}-{self.team_away}"
 
@@ -86,6 +76,9 @@ class Stats(models.Model):
     )
 
     def positive_validator(value):
+        """
+        Checks if value passed to goals is positive.
+        """
         if value < 0:
             raise ValidationError('Value of this field can not be negative.')
 
@@ -96,3 +89,21 @@ class Stats(models.Model):
 
     def __str__(self):
         return f"ID: {self.id} - {self.match}  - {self.player.first_name} {self.player.last_name}"
+
+@receiver(post_save, sender=Match)
+def increment_match_counter(sender, instance, created, **kwargs):
+    if created:
+        matchday = instance.matchday
+        if matchday:
+            matchday.match_counter += 1
+            matchday.save()
+        
+        instance.match_in_matchday = matchday.match_counter
+        instance.save()
+
+@receiver(post_delete, sender=Match)
+def decrement_match_counter(sender, instance, **kwargs):
+    matchday = instance.matchday
+    if matchday:
+        matchday.match_counter -= 1
+        matchday.save()
