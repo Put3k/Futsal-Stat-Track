@@ -1,8 +1,15 @@
 from django.db import models, transaction
+from django.db.models import Sum
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 from django.core.exceptions import ValidationError
 from datetime import datetime
+
+TEAM_CHOICES = (
+    ("Blue", "Team Blue"),
+    ("Orange", "Team Orange"),
+    ("Colors", "Team Colors")
+)
 
 class Player(models.Model):
 
@@ -17,7 +24,48 @@ class Player(models.Model):
             player_id = Player.objects.get(first_name=self.first_name, last_name=self.last_name).id
             raise ValidationError(f"This Player already exists at ID: {player_id}")
         super(Player, self).save(*args, **kwargs)
-            
+
+    def get_player_matches_played(self):
+        matches_played = Stat.objects.filter(player=self).count()
+        return matches_played
+
+    def get_player_goals(self):
+        goals_queryset = Stat.objects.filter(player=self).values_list('goals')
+        total_goals = goals_queryset.aggregate(Sum('goals'))['goals__sum']
+        if total_goals:
+            return total_goals
+        else:
+            return 0
+
+    def get_player_wins(self):
+        stats = Stat.objects.filter(player=self)
+        wins = 0
+        for stat in stats:
+            if stat.win == True:
+                wins += 1
+        return wins
+    
+    def get_player_loses(self):
+        stats = Stat.objects.filter(player=self)
+        loses = 0
+        for stat in stats:
+            if stat.win == False:
+                loses += 1
+        return loses
+
+    def get_player_draws(self):
+        stats = Stat.objects.filter(player=self)
+        draws = 0
+        for stat in stats:
+            if stat.win == "Draw":
+                draws += 1
+        return draws
+
+    get_player_matches_played.short_description = 'Matches'
+    get_player_goals.short_description = 'Goals'
+    get_player_wins.short_description = 'Wins'
+    get_player_loses.short_description = 'Loses'
+    get_player_draws.short_description = 'Draws'
 
 class MatchDay(models.Model):
 
@@ -28,12 +76,6 @@ class MatchDay(models.Model):
         return f"Matchday {self.date.strftime('%d.%m.%Y')}"
 
 class Match(models.Model):
-
-    TEAM_CHOICES = (
-        ("Blue", "Team Blue"),
-        ("Orange", "Team Orange"),
-        ("Colors", "Team Colors")
-    )
 
     matchday = models.ForeignKey(MatchDay, on_delete=models.CASCADE, default=None)
     team_home = models.CharField(choices=TEAM_CHOICES, max_length=20, default="Blue")
@@ -47,7 +89,8 @@ class Match(models.Model):
         return f"{self.home_goals} - {self.away_goals}"
 
     @property
-    def result(self):                   #returns 1 for home, 2 for away, 0 for draw
+    def result(self):   
+        """returns 1 for home, 2 for away, 0 for draw"""
         if self.home_goals > self.away_goals:
             return 1
         elif self.home_goals < self.away_goals:
@@ -55,8 +98,18 @@ class Match(models.Model):
         else:
             return 0
 
+    @property
+    def winner_team(self):
+        """returns color of winner team"""
+        if self.result == 1:
+            return self.team_home
+        elif self.result == 2:
+            return self.team_away
+        else:
+            return None
+
     def clean(self):
-        #check if team_home and team_away are different
+        """check if team_home and team_away are different"""
 
         if self.team_home == self.team_away:
             raise ValidationError("Home team and Away team cannot be the same.")
@@ -67,13 +120,7 @@ class Match(models.Model):
     def __str__(self):
         return f"{self.match_in_matchday}-{self.matchday.date.strftime('%d-%m-%Y')}-{self.team_home}-{self.team_away}"
 
-class Stats(models.Model):
-
-    TEAM_CHOICES = (
-        ("Blue", 'Team Blue'),
-        ("Orange", 'Team Orange'),
-        ("Colors", 'Team Colors'),
-    )
+class Stat(models.Model):
 
     def positive_validator(value):
         """
@@ -89,6 +136,58 @@ class Stats(models.Model):
 
     def __str__(self):
         return f"ID: {self.id} - {self.match}  - {self.player.first_name} {self.player.last_name}"
+
+    @property
+    def win(self):
+        """Result of match for certain Player"""
+        match_winner_team = self.match.winner_team
+        if match_winner_team == self.team:
+            return True
+        elif match_winner_team == None:
+            return "Draw"
+        else:
+            return False
+
+    #Validation Functions
+    @property
+    def player_is_valid(self):
+        """Check if Player already exists in match."""
+
+        players = Stat.objects.filter(match=self.match).values_list('player', flat=True)
+        if self.player.id in players:
+            return False
+        else:
+            return True
+
+    @property
+    def goals_is_valid(self):
+        """Chceck if goals scored by player and other teammates sum up to goals declared in Match."""
+
+        if self.team == self.match.team_home:
+            goals_scored_by_team = self.match.home_goals
+        else:
+            goals_scored_by_team = self.match.away_goals
+
+        goals_queryset = Stat.objects.filter(match=self.match, team=self.team).values('goals')
+        goals_scored_by_teammates = goals_queryset.aggregate(Sum('goals'))['goals__sum']
+        if goals_scored_by_teammates == None:
+            goals_scored_by_teammates = 0
+
+        if self.goals > goals_scored_by_team - goals_scored_by_teammates:
+            return False
+        else:
+            return True
+
+    def clean(self):
+        #Player validation
+        if not self.player_is_valid:
+            raise ValidationError(f'Stat for {self.player} in this match already exists.')
+
+        #Goals validation
+        if not self.goals_is_valid:
+            raise ValidationError('Sum of the goals of the individual players is greater than the declared match goals.')
+
+
 
 @receiver(post_save, sender=Match)
 def increment_match_counter(sender, instance, created, **kwargs):

@@ -14,21 +14,21 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='stats',
             name='draws',
-            field=models.IntegerField(validators=[stat_track.models.Stats.positive_validator]),
+            field=models.IntegerField(validators=[stat_track.models.Stat.positive_validator]),
         ),
         migrations.AlterField(
             model_name='stats',
             name='goals',
-            field=models.IntegerField(validators=[stat_track.models.Stats.positive_validator]),
+            field=models.IntegerField(validators=[stat_track.models.Stat.positive_validator]),
         ),
         migrations.AlterField(
             model_name='stats',
             name='loses',
-            field=models.IntegerField(validators=[stat_track.models.Stats.positive_validator]),
+            field=models.IntegerField(validators=[stat_track.models.Stat.positive_validator]),
         ),
         migrations.AlterField(
             model_name='stats',
             name='wins',
-            field=models.IntegerField(validators=[stat_track.models.Stats.positive_validator]),
+            field=models.IntegerField(validators=[stat_track.models.Stat.positive_validator]),
         ),
     ]
