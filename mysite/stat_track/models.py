@@ -1,4 +1,4 @@
-from django.db import models
+from django.db import models, transaction
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 from django.core.exceptions import ValidationError
@@ -92,6 +92,9 @@ class Stats(models.Model):
 
 @receiver(post_save, sender=Match)
 def increment_match_counter(sender, instance, created, **kwargs):
+    """
+    Increment match counter in Matchday after creation of Match and set its number.
+    """
     if created:
         matchday = instance.matchday
         if matchday:
@@ -103,7 +106,18 @@ def increment_match_counter(sender, instance, created, **kwargs):
 
 @receiver(post_delete, sender=Match)
 def decrement_match_counter(sender, instance, **kwargs):
+    """
+    Decrement match counter in Matchday after deletion of Match.
+    """
     matchday = instance.matchday
+    match_in_matchday = instance.match_in_matchday
     if matchday:
         matchday.match_counter -= 1
         matchday.save()
+
+    with transaction.atomic():
+        # Get all Match records in certain MatchDay, which match_in_matchday is greater than deleted value.
+        matches_to_decrement = Match.objects.filter(matchday=matchday, match_in_matchday__gt=match_in_matchday)
+
+        # Decrement match_in_matchday in all found records.
+        matches_to_decrement.update(match_in_matchday=models.F('match_in_matchday') - 1)
