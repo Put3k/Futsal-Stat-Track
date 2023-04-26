@@ -1,22 +1,50 @@
-{% extends "./gpt_base.html" %}
+{% extends "./base.html" %}
+{% load static %}
 
 {% block title %} Home {% endblock %}
 
 {% if latest_match_list %}
-    {% block header %}Latest Matches{% endblock %}
     {% block content %}
-    <ul>
-        {% for match in latest_match_list %}
-            <li><a href="/match/{{ match.id }}">{{ match }}</a></li>
-        {% endfor %}
-    </ul>
+        <div class="row">
+            <div class="column">
+                <h1 style="text-align:center;">Latest Matchdays</h1>
+                <ul>
+                    {% for matchday in latest_match_day_list %}
+                        <li><a href='/matchday/{{ matchday.id }}' style="text-decoration:none; color:#333333">{{ matchday }}</a></li>
+                    {% endfor %}
+                </ul>
+            </div>
+            <div class="column">
+                <h1 style="text-align:center;">Players</h1>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Player</th>
+                            <th>Goals</th>
+                            <th>Matches</th>
+                            <th>Wins</th>
+                            <th>Loses</th>
+                            <th>Draws</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for player in players_list %}
+                        <tr>
+                            <td>{{ forloop.counter }}</td>
+                            <td><a href='player/{{ player.id }}' style="text-decoration:none; color:#333333">{{ player }}</a></td>
+                            <td>{{ player.get_player_goals }}</td>
+                            <td>{{ player.get_player_matches_played }}</td>
+                            <td>{{ player.get_player_wins }}</td>
+                            <td>{{ player.get_player_loses }}</td>
+                            <td>{{ player.get_player_draws }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
     {% endblock %}
 {% else %}
-    <p>No matches are available.</p>
+    <p>No matchdays are available.</p>
 {% endif %}
-
-
-
-
-
-    

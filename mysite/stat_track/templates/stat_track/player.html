@@ -1,1 +1,17 @@
-{% extends gpt_base.html %}
+{% extends "./base.html" %}
+
+{% block title %}Player Profile{% endblock %}
+{% block content %}
+<!DOCTYPE html>
+    <div>
+        <h1>Player Profile</h1>
+        <p><h2>{{ player.first_name }} {{ player.last_name }}</h2></p>
+    </div>
+    <div>
+        <p>Goals: {{ player.get_player_goals }}</p>
+        <p>Matches: {{ player.get_player_matches_played }}</p>
+        <p>Wins: {{ player.get_player_wins }}</p>
+        <p>Loses: {{ player.get_player_loses }}</p>
+        <p>Draws: {{ player.get_player_draws }}</p>
+    </div>
+{% endblock %}

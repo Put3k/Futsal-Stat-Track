@@ -1,0 +1,96 @@
+body {
+    margin: 0;
+    padding: 0;
+    font-family: sans-serif;
+}
+header {
+    background-color: #333;
+    color: #fff;
+    padding: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+h1 {
+    margin: 0;
+}
+button {
+    background-color: #f2f2f2;
+    border: none;
+    color: rgb(0, 0, 0);
+    padding: 15px 32px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    margin: 4px 2px;
+    cursor: pointer;
+    border-radius: 5px;
+    font-weight: bold
+}
+footer {
+    background-color: #f2f2f2;
+    padding: 10px;
+    text-align: center;
+    font-size: 12px;
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+}
+table {
+    background-color: #ffffff;
+    width: 100%;
+    text-align: center;
+    border-collapse: collapse;
+  }
+  table td, table th {
+    padding: 6px 5px;
+  }
+  table tbody td {
+    font-size: 13px;
+    color: #333333;
+  }
+  table tr:nth-child(even) {
+    background: #d6d6d6;
+  }
+  table thead {
+    background: #333333;
+    background: -moz-linear-gradient(top, #666666 0%, #474747 66%, #333333 100%);
+    background: -webkit-linear-gradient(top, #666666 0%, #474747 66%, #333333 100%);
+    background: linear-gradient(to bottom, #666666 0%, #474747 66%, #333333 100%);
+  }
+  table thead th {
+    font-size: 15px;
+    font-weight: bold;
+    color: #FFFFFF;
+    text-align: center;
+    border-left: 1px solid #FFFFFF;
+  }
+  table thead th:first-child {
+    border-left: none;
+  }
+  
+  table tfoot td {
+    font-size: 14px;
+  }
+  table tfoot .links {
+    text-align: right;
+  }
+  table tfoot .links a{
+    display: inline-block;
+    background: #1C6EA4;
+    color: #FFFFFF;
+    padding: 2px 8px;
+    border-radius: 5px;
+  }
+  .column {
+    float: left;
+    width: 50%;
+    height: 100%;
+  }
+  
+  .row:after {
+    content: "";
+    display: table;
+    clear: both;
+  }
