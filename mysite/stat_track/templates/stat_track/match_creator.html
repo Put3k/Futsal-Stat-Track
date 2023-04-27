@@ -1,0 +1,17 @@
+{% extends "./base.html" %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+<div class="card text-bg-dark mb-3 container text-center" style="max-width: 18rem; max-length: 30rem">
+    <h1>Add Matchday</h1>
+    <br/><br/>
+    <form action="" method=POST> 
+        {% csrf_token %}
+
+        {{ form|crispy }}
+
+        <input type="submit" value="Create Matchday" class="btn btn-secondary">
+
+    </form>
+</div>
+{% endblock %}

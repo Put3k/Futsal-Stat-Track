@@ -3,15 +3,17 @@
 {% block title %}Player Profile{% endblock %}
 {% block content %}
 <!DOCTYPE html>
-    <div>
-        <h1>Player Profile</h1>
-        <p><h2>{{ player.first_name }} {{ player.last_name }}</h2></p>
-    </div>
-    <div>
-        <p>Goals: {{ player.get_player_goals }}</p>
-        <p>Matches: {{ player.get_player_matches_played }}</p>
-        <p>Wins: {{ player.get_player_wins }}</p>
-        <p>Loses: {{ player.get_player_loses }}</p>
-        <p>Draws: {{ player.get_player_draws }}</p>
-    </div>
+    <div class="card text-bg-dark mb-3 container text-center" style="max-width: 18rem;">
+        <div class="card-header">{{ player.first_name }} {{ player.last_name }}</div>
+        <div class="card-body">
+          <h5 class="card-title">Player Statistics</h5>
+          <ul class="list-group list-group-flush" data-bs-theme="dark">
+            <li class="list-group-item">Goals: {{ player.get_player_goals }}</li>
+            <li class="list-group-item">Matches: {{ player.get_player_matches_played }}</li>
+            <li class="list-group-item">Wins: {{ player.get_player_wins }}</li>
+            <li class="list-group-item">Loses: {{ player.get_player_loses }}</li>
+            <li class="list-group-item">Draws: {{ player.get_player_draws }}</li>
+          </ul>
+        </div>
+      </div>
 {% endblock %}

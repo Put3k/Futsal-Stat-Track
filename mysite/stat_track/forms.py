@@ -1,12 +1,12 @@
-from .models import Stats
+from django import forms
+from django.forms import ModelForm, DateInput, DateField
+from .models import MatchDay, Match, Player, Stat
 
-class StatsForm(forms.ModelForm):
-    class Meta:
-        model = Stats
-        fields = '__all__'
-        widgets = {
-            'goals': forms.NumberInput(attrs={'min': '0', 'step': '1'}),
-            'wins': forms.NumberInput(attrs={'min': '0', 'step': '1'}),
-            'loses': forms.NumberInput(attrs={'min': '0', 'step': '1'}),
-            'draws': forms.NumberInput(attrs={'min': '0', 'step': '1'}),
-        }
+
+#Create match creator form
+class DateInput(forms.DateInput):
+    input_type= 'date'
+
+class MatchCreator(forms.Form):
+    date = forms.DateField(widget=DateInput)
+    players = forms.ModelMultipleChoiceField(queryset=Player.objects.all())

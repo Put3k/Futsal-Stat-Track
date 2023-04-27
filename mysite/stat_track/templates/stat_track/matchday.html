@@ -1,28 +1,31 @@
 {% extends "./base.html" %}
-{% load static %}
 
 {% block title %} {{ matchday }} {% endblock %}
 {% block header %} {{ matchday }} {% endblock %}
 
 {% block content %}
-<table>
-    <thead>
-        <tr>
-            <th>Match</th>
-            <th>Home</th>
-            <th>Result</th>
-            <th>Away</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for match in matches_in_matchday_list %}
-        <tr>
-            <td style="min-width: 10px; ">{{ match.match_in_matchday }}</td>
-            <td style="min-width: 100px; ">{{ match.team_home }}</td>
-            <td style="min-width: 10px; ">{{ match.home_goals }} - {{match.away_goals}}</td>
-            <td style="min-width: 100px; ">{{ match.team_away }}</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-dark">
+            <thead>
+                <tr>
+                    <th scope="col">Match</th>
+                    <th scope="col">Home</th>
+                    <th scope="col">Result</th>
+                    <th scope="col">Away</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for match in matches_in_matchday_list %}
+                <tr>
+                    <td style="min-width: 10px; ">{{ match.match_in_matchday }}</td>
+                    <td style="min-width: 100px; ">{{ match.team_home }}</td>
+                    <td style="min-width: 10px; ">{{ match.home_goals }} - {{match.away_goals}}</td>
+                    <td style="min-width: 100px; ">{{ match.team_away }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
 {% endblock %}

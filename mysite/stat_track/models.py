@@ -80,8 +80,8 @@ class Match(models.Model):
     matchday = models.ForeignKey(MatchDay, on_delete=models.CASCADE, default=None)
     team_home = models.CharField(choices=TEAM_CHOICES, max_length=20, default="Blue")
     team_away = models.CharField(choices=TEAM_CHOICES, max_length=20, default="Orange")
-    home_goals = models.IntegerField()
-    away_goals = models.IntegerField()
+    home_goals = models.IntegerField(default=0)
+    away_goals = models.IntegerField(default=0)
     match_in_matchday = models.IntegerField(default = 0)
 
     @property
@@ -178,6 +178,15 @@ class Stat(models.Model):
         else:
             return True
 
+    @property
+    def team_is_valid(self):
+        """Check if team assigned to player in stat appears in match."""
+
+        if self.team != self.match.team_home and self.team != self.match.team_away:
+            return False
+        else:
+            return True
+
     def clean(self):
         #Player validation
         if not self.player_is_valid:
@@ -187,6 +196,9 @@ class Stat(models.Model):
         if not self.goals_is_valid:
             raise ValidationError('Sum of the goals of the individual players is greater than the declared match goals.')
 
+        #Team exists in match validation
+        if not self.team_is_valid:
+            raise ValidationError(f'Team {self.team} does not appear in this match.')
 
 
 @receiver(post_save, sender=Match)
