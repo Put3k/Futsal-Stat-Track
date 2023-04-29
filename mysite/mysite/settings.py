@@ -40,7 +40,7 @@ INSTALLED_APPS = [
     'stat_track.apps.StatTrackConfig',
     'users.apps.UsersConfig',
     "crispy_forms",
-    "crispy_bootstrap5"
+    "crispy_bootstrap5",
 ]
 
 MIDDLEWARE = [

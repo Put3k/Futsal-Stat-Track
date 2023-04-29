@@ -1,0 +1,82 @@
+{% extends "./base.html" %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+
+      <div class='container text-center'>
+        <form method="post">
+            {% csrf_token %}
+            <div class='row'>
+                <div class="card text-bg-dark mb-3 container text-center col" style="max-width: 18rem">
+                    <div class="card-header">
+                        <h3>Available Players</h3>
+                    </div>
+                    <div class="card-body">
+                        <select class="form-select form-select-lg mb-3" aria-label=".form-select-lg example" id="available_players" name="available_players" size="10" multiple>
+                        {% for player in list_of_players %}
+                            <option value="{{ player.id }}">{{ player }}</option>
+                        {% endfor %}
+                        </select>
+                    </div>
+                    <div class="card-footer">
+                        <button type="button" class="btn btn-secondary" id="add_player">Add player</button>
+                    </div>
+                </div>
+    
+                <div class="card text-bg-dark mb-3 container text-center col" style="max-width: 18rem">
+                    <div class="card-header">
+                        <h3>Selected Players</h3>
+                    </div>
+                    <div class="card-body">
+                        <select id="selected_players" name="selected_players" method="post" action="{% url 'match_creator_matches' %}" class="form-select form-select-lg mb-3 form-control" aria-label=".form-select-lg example" size="10" multiple>
+                        {% for player in selected_players %}
+                            <option value="{{ player.id }}">{{ player.name }}</option>
+                        {% endfor %}
+                        </select>
+                    </div>
+                    <div class="card-footer">
+                        Count: <span id="count">{{ selected_players|length }}</span>
+                        <button type="button" class="btn btn-secondary" id="remove_player">Remove player</button>
+                    </div>
+                </div>
+            </div>
+            <div class='row'>
+                <div class='col card text-bg-dark mb-3 container text-center' style="max-width: 18rem">
+                    <div class='card-header'>
+                        <h3>Date of matchday</h3>
+                    </div>
+                    <div class='card-body'>
+                        <form method="post">
+                            {{ form.date }}
+                        </form>
+                    </div>
+                </div>    
+                <div class='col card text-bg-dark mb-3 container text-center' style="max-width: 18rem">
+                    <div class='card-body'>
+                        <button type="submit" class="btn btn-secondary" name="saveMatch" value="saveMatch"><h2>Save Match</h2></button>
+                    </div>
+                </div>
+            </div>
+          </form>
+    </div>
+    
+    <script>
+    $(document).ready(function() {
+        $('#add_player').click(function() {
+            $('#available_players option:selected').each(function() {
+                $(this).remove().appendTo('#selected_players');
+            });
+            $('#count').text($('#selected_players option').length);
+        });
+    
+        $('#remove_player').click(function() {
+            $('#selected_players option:selected').each(function() {
+                $(this).remove().appendTo('#available_players');
+            });
+            $('#count').text($('#selected_players option').length);
+        });
+    });
+    </script>
+    
+
+{% endblock %}

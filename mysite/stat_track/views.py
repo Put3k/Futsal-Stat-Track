@@ -1,6 +1,6 @@
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, redirect, get_object_or_404
 from .models import MatchDay, Match, Player, Stat
-from .forms import MatchCreator
+from .forms import MatchDayForm
 from django.db.models.functions import Lower
 
 def home(request):
@@ -22,15 +22,29 @@ def matchday(request, matchday_id):
     context = {"matches_in_matchday_list": matches_in_matchday_list, "matchday": matchday}
     return render(request, "stat_track/matchday.html", context)
 
-def match_creator(request):
-    submitted = False
+def match_creator_matchday(request):
     if request.method == "POST":
-        form = MatchCreator(request.POST)
-        if form.is_valid():
-            pass
+        if "saveMatch" in request.POST:
+            selected_players = request.POST.getlist("selected_players")
+            request.session['selected_players'] = selected_players
+
+            form = MatchDayForm(request.POST)
+            if form.is_valid():
+                form.save()
+
+            return redirect('match_creator_matches')
+
 
     list_of_players = Player.objects.all().order_by("last_name")
-    form = MatchCreator
-
+    form = MatchDayForm()
     context = {"list_of_players": list_of_players, "form": form}
-    return render(request, "stat_track/match_creator.html",context)
+
+    return render(request, "stat_track/match_creator_matchday.html", context)
+
+def match_creator_matches(request):
+
+    selected_players_ids = request.session.get('selected_players', [])
+    players_list = Player.objects.filter(id__in=selected_players_ids)
+    context = {"players_list": players_list}
+
+    return render(request, "stat_track/match_creator_matches.html", context)
