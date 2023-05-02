@@ -6,6 +6,8 @@ urlpatterns = [
     path("moderator", views.moderator_panel, name="moderator_panel"),
     path('player/<int:player_id>/', views.player_stats, name="player_stats"),
     path('matchday/<int:matchday_id>/', views.matchday, name="matchday"),
-    path('match_creator_matchday/', views.match_creator_matchday, name="match_creator_matchday"),
-    path('match_creator_matches/', views.match_creator_matches, name="match_creator_matches"),
+    path('create_matchday/', views.match_creator_matchday, name="create_matchday"),
+    path('matchday/<int:matchday_id>/edit', views.match_creator_matches, name="edit_matchday"),
+
+    path('ajax_load_players/', views.load_players, name='ajax_load_players'), #AJAX
 ]

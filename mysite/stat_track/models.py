@@ -6,9 +6,9 @@ from django.core.exceptions import ValidationError
 from datetime import datetime
 
 TEAM_CHOICES = (
-    ("Blue", "Team Blue"),
-    ("Orange", "Team Orange"),
-    ("Colors", "Team Colors")
+    ("blue", "blue"),
+    ("orange", "orange"),
+    ("colors", "colors")
 )
 
 class Player(models.Model):
@@ -73,13 +73,23 @@ class MatchDay(models.Model):
     match_counter = models.PositiveIntegerField(default=0, )
 
     def __str__(self):
-        return f"Matchday {self.date.strftime('%d.%m.%Y')}"
+        return f"Matchday {self.date.strftime('%d-%m-%Y')}"
+
+class MatchDayTicket(models.Model):
+    #Model to store data of players assigned to team in matchday
+
+    matchday = models.ForeignKey(MatchDay, on_delete=models.CASCADE)
+    player = models.ForeignKey(Player, on_delete=models.CASCADE)
+    team = models.CharField(choices=TEAM_CHOICES, max_length=16)
+
+    def __str__(self):
+        return f"Ticket-{self.matchday.date.strftime('%d-%m-%Y')}-{self.player.id}-{self.id}"
 
 class Match(models.Model):
 
     matchday = models.ForeignKey(MatchDay, on_delete=models.CASCADE, default=None)
-    team_home = models.CharField(choices=TEAM_CHOICES, max_length=20, default="Blue")
-    team_away = models.CharField(choices=TEAM_CHOICES, max_length=20, default="Orange")
+    team_home = models.CharField(choices=TEAM_CHOICES, max_length=20)
+    team_away = models.CharField(choices=TEAM_CHOICES, max_length=20)
     home_goals = models.IntegerField(default=0)
     away_goals = models.IntegerField(default=0)
     match_in_matchday = models.IntegerField(default = 0)
@@ -108,6 +118,10 @@ class Match(models.Model):
         else:
             return None
 
+    @property
+    def print_match(self):
+        return f"{self.team_home.capitalize()} {self.home_goals} - {self.away_goals} {self.team_away.capitalize()}"
+
     def clean(self):
         """check if team_home and team_away are different"""
 
@@ -131,17 +145,24 @@ class Stat(models.Model):
 
     player = models.ForeignKey(Player, on_delete=models.CASCADE)
     match = models.ForeignKey(Match, on_delete=models.CASCADE)
-    team = models.CharField(choices=TEAM_CHOICES, max_length=16)
     goals = models.IntegerField(validators=[positive_validator], default=0)
 
     def __str__(self):
         return f"ID: {self.id} - {self.match}  - {self.player.first_name} {self.player.last_name}"
 
     @property
+    def get_team(self):
+        "Get player team"
+        matchday = self.match.matchday
+
+        team = MatchDayTicket.objects.filter(matchday=matchday, player=self.player)['team']
+        return team
+
+    @property
     def win(self):
         """Result of match for certain Player"""
         match_winner_team = self.match.winner_team
-        if match_winner_team == self.team:
+        if match_winner_team == self.get_team:
             return True
         elif match_winner_team == None:
             return "Draw"
@@ -163,7 +184,7 @@ class Stat(models.Model):
     def goals_is_valid(self):
         """Chceck if goals scored by player and other teammates sum up to goals declared in Match."""
 
-        if self.team == self.match.team_home:
+        if self.get_team == self.match.team_home:
             goals_scored_by_team = self.match.home_goals
         else:
             goals_scored_by_team = self.match.away_goals
@@ -182,7 +203,7 @@ class Stat(models.Model):
     def team_is_valid(self):
         """Check if team assigned to player in stat appears in match."""
 
-        if self.team != self.match.team_home and self.team != self.match.team_away:
+        if self.get_team != self.match.team_home and self.get_team != self.match.team_away:
             return False
         else:
             return True

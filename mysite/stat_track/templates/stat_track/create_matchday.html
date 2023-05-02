@@ -1,0 +1,187 @@
+{% extends "./base.html" %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+<style>
+    .blue {
+        color: blue;
+    }
+    .orange {
+        color: orange;
+    }
+    .colors {
+        color: green;
+    }
+    .color-box {
+        width: 20px;
+        height: 20px;
+        display: inline-block;
+        margin-right: 5px;
+    }
+    .color-box.blue {
+        background-color: blue;
+    }
+    .color-box.orange {
+        background-color: orange;
+    }
+    .color-box.colors {
+        background-color: green;
+    }
+</style>
+
+    <div class='container text-center'>
+        <form method="post">
+            {% csrf_token %}
+
+            <div class='row'>
+                <div class="card text-bg-dark mb-3 container text-center col" style="max-width: 18rem">
+                    <div class="card-header">
+                        <h3>Available Players</h3>
+                    </div>
+                    <div class="card-body">
+                        <select class="form-select form-select-lg mb-3" aria-label=".form-select-lg example" id="available_players" name="available_players" size="10" multiple>
+                        {% for player in list_of_players %}
+                            <option value="{{ player.id }}" data-team="{{ player.team }}">{{ player }}</option>
+                        {% endfor %}
+                        </select>
+                    </div>
+                    <div class="card-footer">
+                        <button type="button" data-team="blue" class="btn btn-primary" id="add_to_blue">Blue</button>
+                        <button type="button" data-team="orange" class="btn btn-warning" id="add_to_orange">Orange</button>
+                        <button type="button" data-team="colors" class="btn btn-secondary" id="add_to_colors">Colors</button>
+                    </div>
+                </div>
+                
+                {% comment %} BLUE TEAM FORM {% endcomment %}
+                <div class="card text-bg-dark mb-3 container text-center col" style="max-width: 18rem">
+                    <div class="card-header">
+                        <h3>Blue Team</h3>
+                    </div>
+                    <div class="card-body">
+                        <select id="team_blue" name="team_blue" class="form-select form-select-lg mb-3 form-control" aria-label=".form-select-lg example" size="10" multiple>
+                        {% for player in team_blue %}
+                            <option value="{{ player.id }}" data-team="{{ player.team }}">{{ player.name }}</option>
+                        {% endfor %}
+                        </select>
+                    </div>
+                    <div class="card-footer">
+                        Count: <span id="blue_count">{{ team_blue|length }}</span>
+                        <button type="button" class="btn btn-secondary" id="remove_player_blue">Remove player</button>
+                    </div>
+                </div>
+
+                {% comment %} ORANGE TEAM FORM {% endcomment %}
+                <div class="card text-bg-dark mb-3 container text-center col" style="max-width: 18rem">
+                    <div class="card-header">
+                        <h3>Orange Team</h3>
+                    </div>
+                    <div class="card-body">
+                        <select id="team_orange" name="team_orange" class="form-select form-select-lg mb-3 form-control" aria-label=".form-select-lg example" size="10" multiple>
+                        {% for player in team_orange %}
+                            <option value="{{ player.id }}" data-team="{{ player.team }}">{{ player.name }}</option>
+                        {% endfor %}
+                        </select>
+                    </div>
+                    <div class="card-footer">
+                        Count: <span id="orange_count">{{ team_orange|length }}</span>
+                        <button type="button" class="btn btn-secondary" id="remove_player_orange">Remove player</button>
+                    </div>
+                </div>
+
+                {% comment %} COLORS TEAM FORM {% endcomment %}
+                <div class="card text-bg-dark mb-3 container text-center col" style="max-width: 18rem">
+                    <div class="card-header">
+                        <h3>Colors Team</h3>
+                    </div>
+                    <div class="card-body">
+                        <select id="team_colors" name="team_colors" class="form-select form-select-lg mb-3 form-control" aria-label=".form-select-lg example" size="10" multiple>
+                        {% for player in team_colors %}
+                            <option value="{{ player.id }}" data-team="{{ player.team }}">{{ player.name }}</option>
+                        {% endfor %}
+                        </select>
+                    </div>
+                    <div class="card-footer">
+                        Count: <span id="colors_count">{{ team_colors|length }}</span>
+                        <button type="button" class="btn btn-secondary" id="remove_player_colors">Remove player</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class='row'>
+                <div class='col card text-bg-dark mb-3 container text-center' style="max-width: 18rem">
+                    <div class='card-header'>
+                        <h3>Date of matchday</h3>
+                    </div>
+                    <div class='card-body'>
+                        <form method="post">
+                            {{ form.date }}
+                        </form>
+                    </div>
+                </div>    
+                <div class='col card text-bg-dark mb-3 container text-center' style="max-width: 18rem">
+                    <div class='card-body'>
+                        <button type="submit" class="btn btn-secondary" name="saveMatch" value="saveMatch"><h2>Save Matchday</h2></button>
+                    </div>
+                </div>
+            </div>
+            
+          </form>
+    </div>
+
+    <script>
+        $(document).ready(function() {
+            $('#add_to_blue').click(function() {
+                $('#available_players option:selected').each(function() {
+                    $(this).removeClass('orange colors').addClass('blue');
+                    $('<span class="color-box blue"></span>').insertBefore($(this));
+                    $(this).appendTo('#team_blue').attr('data-team', 'blue');
+                });
+                $('#blue_count').text($('#team_blue option').length);
+            });
+    
+            $('#add_to_orange').click(function() {
+                $('#available_players option:selected').each(function() {
+                    $(this).removeClass('blue colors').addClass('orange');
+                    $('<span class="color-box orange"></span>').insertBefore($(this));
+                    $(this).appendTo('#team_orange').attr('data-team', 'orange');
+                });
+                $('#orange_count').text($('#team_orange option').length);
+            });
+    
+            $('#add_to_colors').click(function() {
+                $('#available_players option:selected').each(function() {
+                    $(this).removeClass('blue orange').addClass('colors');
+                    $('<span class="color-box green"></span>').insertBefore($(this));
+                    $(this).appendTo('#team_colors').attr('data-team', 'colors');
+                });
+                $('#colors_count').text($('#team_colors option').length);
+            });
+    
+            $('#remove_player_blue').click(function() {
+                $('#team_blue option:selected').each(function() {
+                    $(this).prev('.color-box').remove();
+                    $(this).appendTo('#available_players').removeClass('blue orange colors');
+                });
+                $('#blue_count').text($('#team_blue option').length);
+            });
+
+            $('#remove_player_orange').click(function() {
+                $('#team_orange option:selected').each(function() {
+                    $(this).prev('.color-box').remove();
+                    $(this).appendTo('#available_players').removeClass('blue orange colors');
+                });
+                $('#orange_count').text($('#team_orange option').length);
+            });
+
+            $('#remove_player_colors').click(function() {
+                $('#team_colors option:selected').each(function() {
+                    $(this).prev('.color-box').remove();
+                    $(this).appendTo('#available_players').removeClass('blue orange colors');
+                });
+                $('#colors_count').text($('#team_colors option').length);
+            });
+        });
+    </script>
+
+
+{% endblock %}
