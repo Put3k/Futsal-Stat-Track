@@ -155,7 +155,8 @@ class Stat(models.Model):
         "Get player team"
         matchday = self.match.matchday
 
-        team = MatchDayTicket.objects.filter(matchday=matchday, player=self.player)['team']
+        ticket = MatchDayTicket.objects.filter(matchday=matchday, player=self.player).get()
+        team = ticket.team
         return team
 
     @property

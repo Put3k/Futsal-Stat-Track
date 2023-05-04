@@ -37,38 +37,47 @@
         </div>
 
         <div class='col-8'>
-            <div class='card text-bg-dark'>
-                <div class='card-header'>
-                    <h3>Create Match</h3>
-                </div>
-                <div class='card-body'>
-                    <div class='container-fluid text-center'>
-                        <form method="POST" id="matchCreator" data-players-url="{% url 'ajax_load_players' %}">
+            <form method="POST" id="matchCreator" data-players-url="{% url 'ajax_load_players' %}">
+                <div class='card text-bg-dark'>
+                    <div class='card-header'>
+                        <h3>Create Match</h3>
+                    </div>
+                    <div class='card-body'>
+                        <div class='container-fluid text-center'>
                             {% csrf_token %}
                             <div class='row'>
                                 <div class='col'>
-                                    <div class='input-group mb-3'>
+                                    <div class='input-group-text bg-dark border-0 w-100'>
                                         {{ form.team_home }}
                                         {{ form.home_goals }}
                                     </div>
                                 </div>
                                 <div class='col'>
-                                    {{ form.away_goals }}
-                                    {{ form.team_away }}
+                                    <div class='input-group-text bg-dark border-0 w-100'>
+                                        {{ form.away_goals }}
+                                        {{ form.team_away }}
+                                    </div>
                                 </div>
                             </div>
                             <div class='row'>
                                 <div class='col'>
-                                    <div id="player-fields-home">Home</div>
+                                    <section id='team-home'>
+                                        <div id="player-fields-home"></div>
+                                    </section>
                                 </div>
                                 <div class='col'>
-                                    <div id="player-fields-away">Away</div>
+                                    <section method='POST' id='team-away'>
+                                        <div id="player-fields-away"></div>
+                                    </section>
                                 </div>
                             </div>
-                        </form>
+                        </div>
+                    </div>
+                    <div class='card-footer'>
+                        <button type="submit" name="addMatch" value="addMatch" class="btn btn-outline-success">Add Match</button>
                     </div>
                 </div>
-            </div>
+            </form>
         </div>
 
         <div class='col-2'>
@@ -77,7 +86,20 @@
                     <h3>Teams</h3>
                 </div>
                 <div class='card-body'>
-                    teams_table
+                    <div class='list-group'>
+                        {% for ticket in ticket_list %}
+                            <a href='#' class="list-group-item list-group-item-action bg-dark text-white d-flex justify-content-between align-items-center" aria-current="true">
+                                {{ ticket.player }}
+                                {% if ticket.team == "blue" %}
+                                    <span class="badge rounded-pill" style="background-color:#0075ff"> </span>
+                                {% elif ticket.team == "orange" %}
+                                    <span class="badge rounded-pill" style="background-color:#ff8a00"> </span>
+                                {% elif ticket.team == "colors" %}
+                                    <span class="badge rounded-pill" style="background-color:#75ff00"> </span>
+                                {% endif %}
+                            </a>
+                        {% endfor %}
+                    </div>
                 </div>
             </div>
         </div>

@@ -5,10 +5,13 @@ from django.urls import reverse
 from .models import MatchDay, MatchDayTicket, Match, Player, Stat
 from .forms import MatchDayForm, MatchCreator
 from django.db.models.functions import Lower
+from django.db.models import F, Sum
+
 
 def home(request):
     latest_match_day_list = MatchDay.objects.order_by("-date")[:5]
-    players_list = Player.objects.all().order_by("last_name")
+    players_list = Player.objects.annotate(total_wins=Sum('stat__')).order_by('-total_goals')
+
     context = {"latest_match_day_list": latest_match_day_list, "players_list": players_list}
     return render(request, "stat_track/home.html", context)
 
@@ -52,7 +55,7 @@ def match_creator_matchday(request):
             create_matchday_tickets(team_orange, matchday, "orange")
             create_matchday_tickets(team_colors, matchday, "colors")
 
-            return redirect(f"matchday/{matchday.id}/edit")
+            return redirect(f"/matchday/{matchday.id}/edit")
 
     list_of_players = Player.objects.all().order_by("last_name")
     form = MatchDayForm()
@@ -60,18 +63,47 @@ def match_creator_matchday(request):
 
     return render(request, "stat_track/create_matchday.html", context)
 
-def match_creator_matches(request, matchday_id):
+def edit_matchday(request, matchday_id):
 
     #get matchday
     matchday = get_object_or_404(MatchDay, pk=matchday_id)
 
+    if "addMatch" in request.POST:
+        
+        #create match object and save it to database.
+        form = MatchCreator(request.POST)
+        if form.is_valid():
+            match = form.save(commit=False)
+            match.matchday = matchday
+            match.save()
+
+            players_stat_list = []
+            for key, value in request.POST.items():
+                if key.isdigit():
+                    player = {'id': key, 'goals': value}
+                    players_stat_list.append(player)
+
+            for record in players_stat_list:
+                player_id = record['id']
+                player = Player.objects.filter(pk=player_id).get()
+                goals = record['goals']
+
+                stat = Stat(player=player, match=match, goals=goals)
+                stat.save()
+
+        else:
+            print("error")
+
     #get match list for this matchday
     match_list = Match.objects.filter(matchday=matchday)
+
+    #get matchday tickets
+    ticket_list = MatchDayTicket.objects.filter(matchday=matchday)
 
     form = MatchCreator()
     MatchCreatorFormSet = formset_factory(MatchCreator, extra=3)
 
-    context = {"match_list":match_list, "matchday":matchday, "form":form, "formset":MatchCreatorFormSet}
+    context = {"match_list":match_list, "matchday":matchday, "ticket_list":ticket_list, "form":form, "formset":MatchCreatorFormSet}
 
     return render(request, "stat_track/edit_matchday.html", context)
 
@@ -107,6 +139,3 @@ def load_players(request):
         template_away = "stat_track/players_away_dropdown_list_options.html"
 
         return render(request, template_away, context_away)
-        # data["away_data"] = away_data
-    
-    # return render(request, 'persons/city_dropdown_list_options.html', {'cities': cities})

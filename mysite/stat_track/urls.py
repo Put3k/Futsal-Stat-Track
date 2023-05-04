@@ -7,7 +7,7 @@ urlpatterns = [
     path('player/<int:player_id>/', views.player_stats, name="player_stats"),
     path('matchday/<int:matchday_id>/', views.matchday, name="matchday"),
     path('create_matchday/', views.match_creator_matchday, name="create_matchday"),
-    path('matchday/<int:matchday_id>/edit', views.match_creator_matches, name="edit_matchday"),
+    path('matchday/<int:matchday_id>/edit', views.edit_matchday, name="edit_matchday"),
 
     path('ajax_load_players/', views.load_players, name='ajax_load_players'), #AJAX
 ]
