@@ -3,14 +3,16 @@ from django.http import JsonResponse
 from django.forms import formset_factory
 from django.urls import reverse
 from .models import MatchDay, MatchDayTicket, Match, Player, Stat
-from .forms import MatchDayForm, MatchCreator
+from .forms import MatchDayForm, MatchCreator, StatForm
 from django.db.models.functions import Lower
 from django.db.models import F, Sum
+from django.contrib import messages
+from django.db import transaction
 
 
 def home(request):
     latest_match_day_list = MatchDay.objects.order_by("-date")[:5]
-    players_list = Player.objects.annotate(total_wins=Sum('stat__')).order_by('-total_goals')
+    players_list = Player.objects.all().order_by('last_name')
 
     context = {"latest_match_day_list": latest_match_day_list, "players_list": players_list}
     return render(request, "stat_track/home.html", context)
@@ -69,30 +71,38 @@ def edit_matchday(request, matchday_id):
     matchday = get_object_or_404(MatchDay, pk=matchday_id)
 
     if "addMatch" in request.POST:
-        
-        #create match object and save it to database.
+
+        #get matchForm from POST
         form = MatchCreator(request.POST)
+        stat_list = []
+        stat_counter = 0
+
         if form.is_valid():
+
             match = form.save(commit=False)
             match.matchday = matchday
             match.save()
 
-            players_stat_list = []
             for key, value in request.POST.items():
-                if key.isdigit():
-                    player = {'id': key, 'goals': value}
-                    players_stat_list.append(player)
+                if key.isdigit():                        #checks if key is a digit that represents ID
+                    stat_counter += 1               
+                    player = Player.objects.filter(pk=key).first()
+                    goals = value
+                    stat = Stat(player=player, match=match, goals=goals)
 
-            for record in players_stat_list:
-                player_id = record['id']
-                player = Player.objects.filter(pk=player_id).get()
-                goals = record['goals']
+                    if stat.full_clean():
+                        stat_list.append(stat.save(commit=False))
 
-                stat = Stat(player=player, match=match, goals=goals)
-                stat.save()
+                    else:
+                        match.delete()
 
+            if len(stat_list) == stat_counter:
+                for stat in stat_list:
+                    stat.save()
+            else:
+                match.delete()
         else:
-            print("error")
+            pass
 
     #get match list for this matchday
     match_list = Match.objects.filter(matchday=matchday)

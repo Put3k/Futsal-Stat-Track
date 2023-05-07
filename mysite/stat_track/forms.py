@@ -1,6 +1,6 @@
 from django import forms
 from django.forms import ModelForm
-from .models import MatchDay, MatchDayTicket, Match, Player
+from .models import MatchDay, MatchDayTicket, Match, Player, Stat
 
 class DateInput(forms.DateInput):
     input_type = 'date'
@@ -24,3 +24,8 @@ class MatchCreator(forms.ModelForm):
             'home_goals': forms.NumberInput(attrs={'class':'form-control bg-dark text-white w-25'}),
             'away_goals': forms.NumberInput(attrs={'class':'form-control bg-dark text-white w-25'})
         }
+
+class StatForm(forms.ModelForm):
+    class Meta:
+        model = Stat
+        fields = "__all__"

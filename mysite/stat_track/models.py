@@ -61,6 +61,14 @@ class Player(models.Model):
                 draws += 1
         return draws
 
+    def get_player_goals_in_match(self, match):
+        goals_queryset = Stat.objects.filter(player=self, match=match).values_list('goals')
+        goals_in_match = goals_queryset.aggregate(Sum('goals'))['goals__sum']
+        if goals_in_match:
+            return goals_in_match
+        else:
+            return 0
+
     get_player_matches_played.short_description = 'Matches'
     get_player_goals.short_description = 'Goals'
     get_player_wins.short_description = 'Wins'
@@ -137,9 +145,7 @@ class Match(models.Model):
 class Stat(models.Model):
 
     def positive_validator(value):
-        """
-        Checks if value passed to goals is positive.
-        """
+        """Checks if value passed to goals is positive."""
         if value < 0:
             raise ValidationError('Value of this field can not be negative.')
 
@@ -152,7 +158,7 @@ class Stat(models.Model):
 
     @property
     def get_team(self):
-        "Get player team"
+        """Get player team"""
         matchday = self.match.matchday
 
         ticket = MatchDayTicket.objects.filter(matchday=matchday, player=self.player).get()
@@ -185,17 +191,23 @@ class Stat(models.Model):
     def goals_is_valid(self):
         """Chceck if goals scored by player and other teammates sum up to goals declared in Match."""
 
+        #set value of goals scored by team
         if self.get_team == self.match.team_home:
             goals_scored_by_team = self.match.home_goals
         else:
             goals_scored_by_team = self.match.away_goals
 
-        goals_queryset = Stat.objects.filter(match=self.match, team=self.team).values('goals')
-        goals_scored_by_teammates = goals_queryset.aggregate(Sum('goals'))['goals__sum']
-        if goals_scored_by_teammates == None:
-            goals_scored_by_teammates = 0
+        matchday = self.match.matchday
+        teammates_queryset = MatchDayTicket.objects.filter(matchday = matchday, team = self.get_team).values('player_id')
+        teammates = [Player.objects.get(pk=value['player_id']) for value in teammates_queryset]
+        goals_scored_by_teammates = 0
 
-        if self.goals > goals_scored_by_team - goals_scored_by_teammates:
+        for player in teammates:
+            player_goals = player.get_player_goals_in_match(match = self.match)
+            if player_goals != None:
+                goals_scored_by_teammates += player_goals
+
+        if self.goals != goals_scored_by_team - goals_scored_by_teammates:
             return False
         else:
             return True
@@ -211,12 +223,12 @@ class Stat(models.Model):
 
     def clean(self):
         #Player validation
-        if not self.player_is_valid:
-            raise ValidationError(f'Stat for {self.player} in this match already exists.')
+        # if not self.player_is_valid:
+        #     raise ValidationError(f'Stat for {self.player} in this match already exists.')
 
         #Goals validation
         if not self.goals_is_valid:
-            raise ValidationError('Sum of the goals of the individual players is greater than the declared match goals.')
+            raise ValidationError('Sum of the goals of the individual players is not equal the declared match goals.')
 
         #Team exists in match validation
         if not self.team_is_valid:
