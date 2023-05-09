@@ -1,14 +1,11 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import JsonResponse
 from django.forms import formset_factory
 from django.urls import reverse
 from .models import MatchDay, MatchDayTicket, Match, Player, Stat
 from .forms import MatchDayForm, MatchCreator, StatForm
-from django.db.models.functions import Lower
-from django.db.models import F, Sum
 from django.contrib import messages
+from django.core.exceptions import ValidationError
 from django.db import transaction
-
 
 def home(request):
     latest_match_day_list = MatchDay.objects.order_by("-date")[:5]
@@ -65,44 +62,55 @@ def match_creator_matchday(request):
 
     return render(request, "stat_track/create_matchday.html", context)
 
+@transaction.atomic
 def edit_matchday(request, matchday_id):
 
     #get matchday
     matchday = get_object_or_404(MatchDay, pk=matchday_id)
 
     if "addMatch" in request.POST:
-
-        #get matchForm from POST
         form = MatchCreator(request.POST)
         stat_list = []
         stat_counter = 0
 
         if form.is_valid():
-
             match = form.save(commit=False)
             match.matchday = matchday
-            match.save()
+
+            try:
+                match.full_clean()  # Validate match data
+                match.save()
+            except ValidationError as e:
+                messages.error(request, str(e))
+                return redirect("stat_track/edit_matchday.html")
 
             for key, value in request.POST.items():
-                if key.isdigit():                        #checks if key is a digit that represents ID
-                    stat_counter += 1               
+                if key.isdigit():
+                    stat_counter += 1
                     player = Player.objects.filter(pk=key).first()
                     goals = value
                     stat = Stat(player=player, match=match, goals=goals)
 
-                    if stat.full_clean():
-                        stat_list.append(stat.save(commit=False))
-
-                    else:
+                    try:
+                        stat.full_clean()  # Validate stat data
+                        stat_list.append(stat)
+                    except ValidationError as e:
+                        messages.error(request, str(e))
                         match.delete()
+                        return redirect("stat_track/edit_matchday.html")
 
             if len(stat_list) == stat_counter:
                 for stat in stat_list:
                     stat.save()
+                messages.success(request, 'Match has been added successfully.')
             else:
                 match.delete()
+                messages.error(request, 'Error occurred when adding player statistics.')
         else:
-            pass
+            messages.error(request, 'Match data is not valid.')
+
+
+
 
     #get match list for this matchday
     match_list = Match.objects.filter(matchday=matchday)
@@ -113,9 +121,16 @@ def edit_matchday(request, matchday_id):
     form = MatchCreator()
     MatchCreatorFormSet = formset_factory(MatchCreator, extra=3)
 
-    context = {"match_list":match_list, "matchday":matchday, "ticket_list":ticket_list, "form":form, "formset":MatchCreatorFormSet}
+    context = {"match_list":match_list, "matchday":matchday, "ticket_list":ticket_list, "form":form, "formset":MatchCreatorFormSet, 'messages': messages.get_messages(request)}
 
     return render(request, "stat_track/edit_matchday.html", context)
+
+def delete_match(request, match_id):
+    match = get_object_or_404(Match, id=match_id)
+    matchday_id = match.matchday.id
+    match.delete()
+    return redirect(f'/matchday/{matchday_id}/edit')
+
 
 # AJAX
 def load_players(request):

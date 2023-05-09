@@ -223,16 +223,16 @@ class Stat(models.Model):
 
     def clean(self):
         #Player validation
-        # if not self.player_is_valid:
-        #     raise ValidationError(f'Stat for {self.player} in this match already exists.')
+        if not self.player_is_valid:
+            raise ValidationError(_(f'Stat for {self.player} in this match already exists.'), code="invalid_player")
 
         #Goals validation
         if not self.goals_is_valid:
-            raise ValidationError('Sum of the goals of the individual players is not equal the declared match goals.')
+            raise ValidationError(_('Sum of the goals of the individual players is not equal the declared match goals.'), code="invalid_goal")
 
         #Team exists in match validation
         if not self.team_is_valid:
-            raise ValidationError(f'Team {self.team} does not appear in this match.')
+            raise ValidationError(_(f'Team {self.team} does not appear in this match.'), code="invalid_team")
 
 
 @receiver(post_save, sender=Match)

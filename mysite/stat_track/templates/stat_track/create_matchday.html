@@ -1,6 +1,8 @@
 {% extends "./base.html" %}
 {% load crispy_forms_tags %}
 
+{% block title %}Create Matchday{% endblock %}
+
 {% block content %}
 <style>
     .blue {
@@ -32,6 +34,12 @@
     <div class='container text-center'>
         <form method="post">
             {% csrf_token %}
+            
+            <div class='row'>
+                <div class='card text-bg-dark mb-3 container text-center col' style='max-width: 19rem'>
+                    <h2>Create Matchday</h2>
+                </div>
+            </div>
 
             <div class='row'>
                 <div class="card text-bg-dark mb-3 container text-center col" style="max-width: 18rem">
