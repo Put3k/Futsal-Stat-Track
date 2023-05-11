@@ -19,12 +19,6 @@ class Player(models.Model):
     def __str__(self):
         return f"{self.first_name} {self.last_name}"
 
-    def save(self, *args, **kwargs):
-        if Player.objects.filter(first_name=self.first_name, last_name=self.last_name).exists():
-            player_id = Player.objects.get(first_name=self.first_name, last_name=self.last_name).id
-            raise ValidationError(f"This Player already exists at ID: {player_id}")
-        super(Player, self).save(*args, **kwargs)
-
     def get_player_matches_played(self):
         matches_played = Stat.objects.filter(player=self).count()
         return matches_played
@@ -69,11 +63,40 @@ class Player(models.Model):
         else:
             return 0
 
+    def get_player_team_in_matchday(self, matchday):
+        team = MatchDayTicket.objects.filter(player=self, matchday=matchday).values('team')
+        return team
+
     get_player_matches_played.short_description = 'Matches'
     get_player_goals.short_description = 'Goals'
     get_player_wins.short_description = 'Wins'
     get_player_loses.short_description = 'Loses'
     get_player_draws.short_description = 'Draws'
+
+    #Check if player already exists in database
+    @property
+    def player_is_valid(self):
+        first_name = self.first_name.capitalize()
+        last_name = self.last_name.capitalize()
+
+        print(f"first_name: {first_name}\nlast_name: {last_name}")
+        if Player.objects.filter(first_name=first_name, last_name=last_name).exists():
+            print("istnieje")
+            return False
+        else:
+            print("nie istnieje")
+            return True
+
+    def clean(self):
+        if not self.player_is_valid:
+            raise ValidationError("Player already exists!")
+
+    #Override save method to save data with capital letters
+    def save(self, *args, **kwargs):
+        self.first_name = self.first_name.capitalize()
+        self.last_name = self.last_name.capitalize()
+        self.full_clean()
+        super(Player, self).save(*args, **kwargs)
 
 class MatchDay(models.Model):
 
@@ -207,7 +230,7 @@ class Stat(models.Model):
             if player_goals != None:
                 goals_scored_by_teammates += player_goals
 
-        if self.goals != goals_scored_by_team - goals_scored_by_teammates:
+        if self.goals > goals_scored_by_team - goals_scored_by_teammates:
             return False
         else:
             return True
@@ -224,15 +247,15 @@ class Stat(models.Model):
     def clean(self):
         #Player validation
         if not self.player_is_valid:
-            raise ValidationError(_(f'Stat for {self.player} in this match already exists.'), code="invalid_player")
+            raise ValidationError(f'Stat for {self.player} in this match already exists.', code="invalid_player")
 
         #Goals validation
         if not self.goals_is_valid:
-            raise ValidationError(_('Sum of the goals of the individual players is not equal the declared match goals.'), code="invalid_goal")
+            raise ValidationError(f'Sum of the goals of the individual players is not equal the declared match goals - {self.player}', code="invalid_goal")
 
         #Team exists in match validation
         if not self.team_is_valid:
-            raise ValidationError(_(f'Team {self.team} does not appear in this match.'), code="invalid_team")
+            raise ValidationError(f'Team {self.get_team} does not appear in this match.', code="invalid_team")
 
 
 @receiver(post_save, sender=Match)

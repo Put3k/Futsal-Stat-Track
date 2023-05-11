@@ -4,12 +4,16 @@
 {% block title %}Edit {{matchday}}{% endblock %}
 
 {% block content %}
-{% if messages %}
-    <ul class="messages">
-        {% for message in messages %}
-            <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+{% if success %}
+    <div class='alert alert-success'>
+        {{ success }}
+    </div>
+{% elif errors %}
+        {% for error in errors %}
+        <div class='alert alert-danger'>
+            {{ error }}
+        </div>
         {% endfor %}
-    </ul>
 {% endif %}
 
 
@@ -162,6 +166,11 @@
             }
         })
     })
+</script>
+<script>
+    function calculateTeamGoals(teamId) {
+        const goalInputs = document.querySelectorAll
+    }
 </script>
 
 
