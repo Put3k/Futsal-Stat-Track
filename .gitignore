@@ -1,0 +1,4 @@
+.env
+venv/
+Stat_tracker_tabelka.xlsx
+db.sqlite3
