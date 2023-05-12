@@ -47,6 +47,9 @@
                     <div class="card-header">
                         <h5>Available Players</h5>
                     </div>
+                    <div class="card-header">
+                        <input  type="text" id="player-name-input" placeholder="Player name..." class="form-control form-control-lg">
+                    </div>
                     <div class="card-body">
                         <select class="form-select form-select-lg mb-3" aria-label=".form-select-lg example" id="available_players" name="available_players" size="10" multiple>
                         {% for player in list_of_players %}
@@ -208,6 +211,21 @@
                 });
                 $("#colors_count").text($("#team_colors option").length);
             });
+        });
+    </script>
+    <script>
+        document.getElementById('player-name-input').addEventListener('input', function () {
+            const input = this.value.toLowerCase();
+            const options = document.getElementById('available_players').options;
+    
+            for (let i = 0; i < options.length; i++) {
+                const playerName = options[i].textContent.toLowerCase();
+                if (playerName.includes(input)) {
+                    options[i].style.display = '';
+                } else {
+                    options[i].style.display = 'none';
+                }
+            }
         });
     </script>
 
