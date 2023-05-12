@@ -121,6 +121,17 @@ def edit_matchday(request, matchday_id):
             error = 'Match data is not valid.'
             errors.append(error)
 
+    elif "addPlayer" in request.POST:
+        player_form = PlayerForm(request.POST)
+        
+        if player_form.is_valid():
+            player = player_form.save()
+            success = f'Player {player} has been added successfully'
+
+            return redirect ('create_matchday')
+        else:
+            player_form = PlayerForm()
+
     #get match list for this matchday
     match_list = Match.objects.filter(matchday=matchday)
 
@@ -146,10 +157,6 @@ def delete_match(request, match_id):
     match.delete()
     return redirect(f'/matchday/{matchday_id}/edit')
 
-def add_player(request):
-
-
-    return render(request, "stat_track/add_player.html", context)
 
 # AJAX
 def load_players(request):
