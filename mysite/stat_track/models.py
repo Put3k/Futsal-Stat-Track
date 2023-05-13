@@ -38,6 +38,13 @@ class Player(models.Model):
             if stat.win == True:
                 wins += 1
         return wins
+
+    def get_player_win_ratio(self):
+        win_count = self.get_player_wins()
+        matches_played = self.get_player_matches_played()
+        win_ratio = round((win_count/matches_played)*100)
+
+        return f"{win_ratio}%"
     
     def get_player_loses(self):
         stats = Stat.objects.filter(player=self)
@@ -63,6 +70,16 @@ class Player(models.Model):
         else:
             return 0
 
+    def get_player_goals_per_match(self):
+        goals_queryset = Stat.objects.filter(player=self).values_list('goals')
+        total_goals = goals_queryset.aggregate(Sum('goals'))['goals__sum']
+        matches_count = Stat.objects.filter(player=self).count()
+        if total_goals:
+            goals_per_match = round(total_goals / matches_count, 2)
+            return goals_per_match
+        else:
+            return 0
+
     def get_player_team_in_matchday(self, matchday):
         team = MatchDayTicket.objects.filter(player=self, matchday=matchday).values('team')
         return team
@@ -79,12 +96,9 @@ class Player(models.Model):
         first_name = self.first_name.capitalize()
         last_name = self.last_name.capitalize()
 
-        print(f"first_name: {first_name}\nlast_name: {last_name}")
         if Player.objects.filter(first_name=first_name, last_name=last_name).exists():
-            print("istnieje")
             return False
         else:
-            print("nie istnieje")
             return True
 
     def clean(self):
