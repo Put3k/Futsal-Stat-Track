@@ -21,6 +21,15 @@ def player_stats(request, player_id):
     player = get_object_or_404(Player, pk=player_id)
     return render(request, "stat_track/player.html", {"player": player})
 
+def players_list(request):
+    players_list = Player.objects.all().order_by('last_name')
+    
+    context = {
+        "players_list": players_list
+    }
+
+    return render(request, "stat_track/players_list.html", context)
+
 def matchday(request, matchday_id):
     matchday = get_object_or_404(MatchDay, pk=matchday_id)
     matches_in_matchday_list = Match.objects.filter(matchday=matchday_id)

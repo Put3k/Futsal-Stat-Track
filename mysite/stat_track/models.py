@@ -19,6 +19,10 @@ class Player(models.Model):
     def __str__(self):
         return f"{self.first_name} {self.last_name}"
 
+    def get_player_matchdays(self):
+        matchday_count = MatchDayTicket.objects.filter(player=self).count()
+        return matchday_count
+
     def get_player_matches_played(self):
         matches_played = Stat.objects.filter(player=self).count()
         return matches_played
@@ -83,6 +87,12 @@ class Player(models.Model):
     def get_player_team_in_matchday(self, matchday):
         team = MatchDayTicket.objects.filter(player=self, matchday=matchday).values('team')
         return team
+
+    def get_mvp_score(self, matchday):
+        """Returns the score of a player's mvp points in a given matchday. The mvp score is calculated based on wins, draws and goals scored. A win - 3pts, a draw - 1pts, a goal - 0.5pts."""
+
+        pass
+
 
     get_player_matches_played.short_description = 'Matches'
     get_player_goals.short_description = 'Goals'
