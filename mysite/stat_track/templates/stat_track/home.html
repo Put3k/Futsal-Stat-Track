@@ -1,40 +1,47 @@
 {% extends "./base.html" %}
+{% load static %}
 
 {% block title %} Home {% endblock %}
 
+{% block scripts %}
+    <script src="{% static 'stat_track/js/home.js' %}"></script>
+{% endblock %}
+
 {% if latest_match_list %}
     {% block content %}
-    <div class="container text-center">
+    <div class="container">
         <div class="row">
-          <div class="col card" data-bs-theme="dark">
-            <h1>Latest Matchdays</h1>
+          <div class="col lg-10 card" data-bs-theme="dark">
+            <h1 class="text-center">Latest Matchdays</h1>
             <div class="list-group">
                 {% for matchday in latest_match_day_list %}
-                    <a href="{% url 'matchday' matchday.id %}" class="list-group-item list-group-item-action list-group-item-dark">{{ matchday }}</a>
+                    <a href="{% url 'matchday' matchday.id %}" class="text-center list-group-item list-group-item-action list-group-item-dark">{{ matchday }}</a>
                 {% endfor %}
             </div>
           </div>
-          <div class="col card" data-bs-theme="dark">
+          <div class="col lg-10 card" data-bs-theme="dark">
+            <div class="card-header">
+                <h1 class="text-center">Players Statistics</h1>
+            </div>
             <div class="table-responsive">
-                <h1>Players Statistics</h1>
-                <table class="table table-dark table-striped" style="white-space:nowrap;">
+                <table id="playersList"class="table table-dark table-striped" style="white-space:nowrap;">
                     <thead>
                         <tr>
-                            <th scope="col">#</th>
-                            <th scope="col">Player</th>
-                            <th scope="col">Goals</th>
-                            <th scope='col'>Goals/Match</th>
-                            <th scope="col">Matches</th>
-                            <th scope="col">Wins</th>
-                            <th scope="col">Loses</th>
-                            <th scope="col">Draws</th>
-                            <th scope="col">Win Ratio</th>
+                            <th onclick="sortTable(0)" scope="col" data-type="number">#</th>
+                            <th onclick="sortTable(1)" scope="col">Player</th>
+                            <th onclick="sortTable(2)" scope="col" data-type="number">Goals</th>
+                            <th onclick="sortTable(3)" scope='col' data-type="number">Goals/Match</th>
+                            <th onclick="sortTable(4)" scope="col" data-type="number">Matches</th>
+                            <th onclick="sortTable(5)" scope="col" data-type="number">Wins</th>
+                            <th onclick="sortTable(6)" scope="col" data-type="number">Loses</th>
+                            <th onclick="sortTable(7)" scope="col" data-type="number">Draws</th>
+                            <th onclick="sortTable(8)" scope="col" data-type="number">Win Ratio</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for player in players_list %}
                         <tr>
-                            <th scope="row">{{ forloop.counter }}</th>
+                            <td>{{ forloop.counter }}</th>
                             <td><a href='player/{{ player.id }}'>{{ player }}</a></td>
                             <td>{{ player.get_player_goals }}</td>
                             <td>{{ player.get_player_goals_per_match }}</td>
@@ -46,7 +53,7 @@
                         </tr>
                         {% endfor %}
                     </tbody>
-                </table>
+                </table>      
             </div>
           </div>
         </div>
