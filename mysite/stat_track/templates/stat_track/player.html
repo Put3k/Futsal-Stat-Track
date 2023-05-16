@@ -4,9 +4,8 @@
 {% block content %}
 <!DOCTYPE html>
     <div class="card text-bg-dark mb-3 container text-center" style="max-width: 18rem;">
-        <div class="card-header">{{ player.first_name }} {{ player.last_name }}</div>
+        <div class="card-header"><h3>{{ player.first_name }} {{ player.last_name }}<h3></div>
         <div class="card-body">
-          <h5 class="card-title">Player Statistics</h5>
           <ul class="list-group list-group-flush" data-bs-theme="dark">
             <li class="list-group-item">Goals: {{ player.get_player_goals }}</li>
             <li class="list-group-item">Matches: {{ player.get_player_matches_played }}</li>
