@@ -30,8 +30,9 @@
                             <th onclick="sortTable(0)" scope="col" data-type="number">#</th>
                             <th onclick="sortTable(1)" scope="col">Player</th>
                             <th onclick="sortTable(2)" scope="col" data-type="number">Goals</th>
-                            <th onclick="sortTable(3)" scope="col" data-type="number">Wins</th>
-                            <th onclick="sortTable(4)" scope="col" data-type="number">Winrate</th>
+                            <th onclick="sortTable(3)" scope="col" data-type="number">Matches</th>
+                            <th onclick="sortTable(4)" scope="col" data-type="number">Wins</th>
+                            <th onclick="sortTable(5)" scope="col" data-type="number">Winrate</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -40,6 +41,7 @@
                             <td>{{ forloop.counter }}</th>
                             <td><a href='player/{{ player.id }}'>{{ player }}</a></td>
                             <td>{{ player.get_player_goals }}</td>
+                            <td>{{ player.get_player_matches_played }}</td>
                             <td>{{ player.get_player_wins }}</td>
                             <td>{{ player.get_player_win_ratio }}</td>
                         </tr>

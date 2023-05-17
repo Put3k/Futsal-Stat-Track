@@ -9,7 +9,8 @@ from django.db import transaction
 
 def home(request):
     latest_match_day_list = MatchDay.objects.order_by("-date")[:5]
-    players_list = Player.objects.all().order_by('last_name')
+    players_list = Player.objects.all()
+    players_list = sorted(players_list, key=lambda x: x.get_player_win_ratio, reverse=True)
 
     context = {"latest_match_day_list": latest_match_day_list, "players_list": players_list}
     return render(request, "stat_track/home.html", context)
@@ -46,8 +47,12 @@ def match_creator_matchday(request):
             ticket = MatchDayTicket(matchday=matchday, player=player, team=team)
             ticket.save()
 
+    list_of_players = Player.objects.all().order_by("last_name")
+    form = MatchDayForm()
+    player_form = PlayerForm()
+
     if request.method == "POST":
-        if "saveMatch" in request.POST:
+        if "saveMatchday" in request.POST:
 
             #Get players sorted by teams.
             team_blue = request.POST.getlist("team_blue")
@@ -65,9 +70,12 @@ def match_creator_matchday(request):
 
             return redirect(f"/matchday/{matchday.id}/edit")
 
-    list_of_players = Player.objects.all().order_by("last_name")
-    form = MatchDayForm()
-    player_form = PlayerForm()
+        elif "addPlayer" in request.POST:
+
+            form = MatchDayForm(request.POST)
+            player_form = PlayerForm(request.POST)
+            if player_form.is_valid():
+                player = player_form.save()
     
     context = {
         "list_of_players": list_of_players,

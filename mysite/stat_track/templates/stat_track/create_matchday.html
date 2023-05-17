@@ -9,6 +9,7 @@
 {% endblock %}
 
 {% block content %}
+{% if user.is_authenticated %}
 <style>
     .blue {
         color: blue;
@@ -144,7 +145,7 @@
                 {% comment %} Save matchday Button {% endcomment %}
                 <div class="col card text-bg-dark mb-3 container text-center" style="max-width: 18rem">
                     <div class="card-body d-flex align-items-center justify-content-center">
-                        <button type="submit" class="btn btn-secondary" name="saveMatch" value="saveMatch"><h2>Save Matchday</h2></button>
+                        <button type="submit" class="btn btn-secondary" name="saveMatchday" value="saveMatchday"><h2>Save Matchday</h2></button>
                     </div>
                 </div>
                 <div class="col card text-bg-dark mb-3 container text-center" style="max-width: 18rem"></div>
@@ -156,7 +157,7 @@
                 <h5>Add new Player</h5>
             </div>
             <div class="card-body">
-                <form action="{% url 'create_matchday' %}" method="POST">
+                <form action="" method="POST">
                     {% csrf_token %}
                     {{ player_form }}
                     <button type="submit" class="btn btn-secondary" name="addPlayer" value="addPlayer">Add Player</button>
@@ -164,5 +165,7 @@
             </div>
         </div>
     </div>
-
+{% else %}
+    <h2>You Have no Permission to Create Matchday.</h2>
+{% endif %}
 {% endblock %}

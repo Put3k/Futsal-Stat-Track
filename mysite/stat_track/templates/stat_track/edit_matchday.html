@@ -9,6 +9,7 @@
 {% endblock %}
 
 {% block content %}
+{% if user.is_authenticated %}
 {% if success %}
     <div class='alert alert-success'>
         {{ success }}
@@ -145,5 +146,7 @@
 
 {% comment %} Matchday ID {% endcomment %}
 <div id='matchday_id' data-matchday-id='{{ matchday.id }}'></div>
-
+{% else %}
+<h3>You Have no Permission to Edit Matchday</h3>
+{% endif %}
 {% endblock %}
