@@ -9,7 +9,8 @@ from django.db import transaction
 
 def home(request):
     latest_match_day_list = MatchDay.objects.order_by("-date")[:5]
-    players_list = Player.objects.all().order_by('last_name')
+    players_list = Player.objects.all()
+    players_list = sorted(players_list, key=lambda x: x.get_player_win_ratio, reverse=True)
 
     context = {"latest_match_day_list": latest_match_day_list, "players_list": players_list}
     return render(request, "stat_track/home.html", context)
@@ -20,6 +21,15 @@ def moderator_panel(request):
 def player_stats(request, player_id):
     player = get_object_or_404(Player, pk=player_id)
     return render(request, "stat_track/player.html", {"player": player})
+
+def players_list(request):
+    players_list = Player.objects.all().order_by('last_name')
+    
+    context = {
+        "players_list": players_list
+    }
+
+    return render(request, "stat_track/players_list.html", context)
 
 def matchday(request, matchday_id):
     matchday = get_object_or_404(MatchDay, pk=matchday_id)
@@ -37,8 +47,12 @@ def match_creator_matchday(request):
             ticket = MatchDayTicket(matchday=matchday, player=player, team=team)
             ticket.save()
 
+    list_of_players = Player.objects.all().order_by("last_name")
+    form = MatchDayForm()
+    player_form = PlayerForm()
+
     if request.method == "POST":
-        if "saveMatch" in request.POST:
+        if "saveMatchday" in request.POST:
 
             #Get players sorted by teams.
             team_blue = request.POST.getlist("team_blue")
@@ -56,9 +70,12 @@ def match_creator_matchday(request):
 
             return redirect(f"/matchday/{matchday.id}/edit")
 
-    list_of_players = Player.objects.all().order_by("last_name")
-    form = MatchDayForm()
-    player_form = PlayerForm()
+        elif "addPlayer" in request.POST:
+
+            form = MatchDayForm(request.POST)
+            player_form = PlayerForm(request.POST)
+            if player_form.is_valid():
+                player = player_form.save()
     
     context = {
         "list_of_players": list_of_players,
@@ -77,22 +94,26 @@ def edit_matchday(request, matchday_id):
     success = None
 
     if "addMatch" in request.POST:
-        form = MatchCreator(request.POST)
+        
+        #match fields
+        team_home = request.POST["team_home"]
+        team_away = request.POST["team_away"]
+        home_goals = request.POST.get("home_goals")
+        away_goals = request.POST.get("away_goals")
+
+        match = Match(
+            matchday = matchday,
+            team_home = team_home,
+            team_away = team_away,
+            home_goals = home_goals,
+            away_goals = away_goals
+        )
+
         stat_list = []
         stat_counter = 0
 
-        if form.is_valid():
-            match = form.save(commit=False)
-            match.matchday = matchday
-
-            #Validate sum of goals scored by players
-            home_team = match.team_home
-            home_sum_of_goals_scored = 0
-
-            away_team = match.team_away
-            away_sum_of_goals_scored = 0
-
-            with transaction.atomic():
+        with transaction.atomic():
+            try:
                 match.full_clean()  # Validate match data
                 match.save()
 
@@ -103,34 +124,12 @@ def edit_matchday(request, matchday_id):
                         goals = value
                         stat = Stat(player=player, match=match, goals=goals)
 
-                        try:
-                            stat.full_clean()  # Validate stat data
-                            stat_list.append(stat)
-                        except ValidationError as e:
-                            raise
-
-                if len(stat_list) == stat_counter:
-                    for stat in stat_list:
+                        stat.full_clean()  # Validate stat data
                         stat.save()
-                    success = 'Match has been added successfully.'
-                else:
-                    error = 'Error occurred when adding player statistics.'
-                    errors.append(error)
 
-        else:
-            error = 'Match data is not valid.'
-            errors.append(error)
-
-    elif "addPlayer" in request.POST:
-        player_form = PlayerForm(request.POST)
-        
-        if player_form.is_valid():
-            player = player_form.save()
-            success = f'Player {player} has been added successfully'
-
-            return redirect ('create_matchday')
-        else:
-            player_form = PlayerForm()
+            except ValidationError as e:
+                for error_message in e:
+                    errors.append(error_message[1][0])
 
     #get match list for this matchday
     match_list = Match.objects.filter(matchday=matchday)

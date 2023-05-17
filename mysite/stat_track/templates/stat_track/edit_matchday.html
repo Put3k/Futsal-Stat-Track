@@ -1,9 +1,15 @@
 {% extends "./base.html" %}
 {% load crispy_forms_tags %}
+{% load static %}
 
 {% block title %}Edit {{matchday}}{% endblock %}
 
+{% block scripts %}
+    <script src="{% static 'stat_track/js/edit_matchday.js' %}"></script>
+{% endblock %}
+
 {% block content %}
+{% if user.is_authenticated %}
 {% if success %}
     <div class='alert alert-success'>
         {{ success }}
@@ -61,23 +67,35 @@
                     <div class='card-header'>
                         <h3>Create Match</h3>
                     </div>
+                    <div class='card-header'>
+                        <div class='row'>
+                            <div class='col'>
+                                <div class='input-group-text bg-dark border-0 w-100'>
+                                    <select name="team_home" class="form-control bg-dark text-white w-75" required="" id="id_team_home">
+                                        <option value="" selected="">---------</option>                                        
+                                        <option value="blue">Blue</option>                                         
+                                        <option value="orange">Orange</option>                                         
+                                        <option value="colors">Colors</option>                               
+                                    </select>
+                                    <input type="number" name="home_goals" value="0" class="form-control bg-dark text-white w-25" required="" id="id_home_goals" readonly>                    
+                                </div>
+                            </div>
+                            <div class='col'>
+                                <div class='input-group-text bg-dark border-0 w-100'>
+                                    <input type="number" name="away_goals" value="0" class="form-control bg-dark text-white w-25" required="" id="id_away_goals" readonly>
+                                    <select name="team_away" class="form-control bg-dark text-white w-75" required="" id="id_team_away">
+                                        <option value="" selected="">---------</option>                                        
+                                        <option value="blue">Blue</option>                                         
+                                        <option value="orange">Orange</option>                                         
+                                        <option value="colors">Colors</option>                               
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     <div class='card-body'>
                         <div class='container-fluid text-center'>
                             {% csrf_token %}
-                            <div class='row'>
-                                <div class='col'>
-                                    <div class='input-group-text bg-dark border-0 w-100'>
-                                        {{ form.team_home }}
-                                        {{ form.home_goals }}
-                                    </div>
-                                </div>
-                                <div class='col'>
-                                    <div class='input-group-text bg-dark border-0 w-100'>
-                                        {{ form.away_goals }}
-                                        {{ form.team_away }}
-                                    </div>
-                                </div>
-                            </div>
                             <div class='row'>
                                 <div class='col'>
                                     <section id='team-home'>
@@ -124,54 +142,11 @@
         </div>
     </div>
 </div>
+
+
+{% comment %} Matchday ID {% endcomment %}
 <div id='matchday_id' data-matchday-id='{{ matchday.id }}'></div>
-
-<script>
-    $("#id_team_home").change(function () {
-        const url = $("#matchCreator").attr("data-players-url");
-        const team = "home";
-        const teamHome = $(this).val();
-        const matchdayId = document.getElementById("matchday_id").getAttribute("data-matchday-id");
-
-        $.ajax({
-            url: url,
-            data: {
-                'team': team,
-                'team_home': teamHome,
-                'matchday_id': matchdayId
-            },
-            success: function (data) {
-                $("#player-fields-home").html(data);
-            }
-        })
-    })
-</script>
-<script>
-    $("#id_team_away").change(function () {
-        const url = $("#matchCreator").attr("data-players-url");
-        const team = "away";
-        const teamAway = $(this).val();
-        const matchdayId = document.getElementById("matchday_id").getAttribute("data-matchday-id");
-
-        $.ajax({
-            url: url,
-            data: {
-                'team': team,
-                'team_away': teamAway,
-                'matchday_id': matchdayId
-            },
-            success: function (data) {
-                console.log(data);
-                $("#player-fields-away").html(data);
-            }
-        })
-    })
-</script>
-<script>
-    function calculateTeamGoals(teamId) {
-        const goalInputs = document.querySelectorAll
-    }
-</script>
-
-
+{% else %}
+<h3>You Have no Permission to Edit Matchday</h3>
+{% endif %}
 {% endblock %}

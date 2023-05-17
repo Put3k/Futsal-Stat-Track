@@ -19,10 +19,17 @@ class Player(models.Model):
     def __str__(self):
         return f"{self.first_name} {self.last_name}"
 
+    @property
+    def get_player_matchdays(self):
+        matchday_count = MatchDayTicket.objects.filter(player=self).count()
+        return matchday_count
+
+    @property
     def get_player_matches_played(self):
         matches_played = Stat.objects.filter(player=self).count()
         return matches_played
 
+    @property
     def get_player_goals(self):
         goals_queryset = Stat.objects.filter(player=self).values_list('goals')
         total_goals = goals_queryset.aggregate(Sum('goals'))['goals__sum']
@@ -31,6 +38,7 @@ class Player(models.Model):
         else:
             return 0
 
+    @property
     def get_player_wins(self):
         stats = Stat.objects.filter(player=self)
         wins = 0
@@ -38,7 +46,16 @@ class Player(models.Model):
             if stat.win == True:
                 wins += 1
         return wins
+
+    @property
+    def get_player_win_ratio(self):
+        win_count = self.get_player_wins
+        matches_played = self.get_player_matches_played
+        win_ratio = round((win_count/matches_played)*100)
+
+        return f"{win_ratio}%"
     
+    @property
     def get_player_loses(self):
         stats = Stat.objects.filter(player=self)
         loses = 0
@@ -47,6 +64,7 @@ class Player(models.Model):
                 loses += 1
         return loses
 
+    @property
     def get_player_draws(self):
         stats = Stat.objects.filter(player=self)
         draws = 0
@@ -55,6 +73,7 @@ class Player(models.Model):
                 draws += 1
         return draws
 
+    @property
     def get_player_goals_in_match(self, match):
         goals_queryset = Stat.objects.filter(player=self, match=match).values_list('goals')
         goals_in_match = goals_queryset.aggregate(Sum('goals'))['goals__sum']
@@ -63,15 +82,27 @@ class Player(models.Model):
         else:
             return 0
 
+    @property
+    def get_player_goals_per_match(self):
+        goals_queryset = Stat.objects.filter(player=self).values_list('goals')
+        total_goals = goals_queryset.aggregate(Sum('goals'))['goals__sum']
+        matches_count = Stat.objects.filter(player=self).count()
+        if total_goals:
+            goals_per_match = round(total_goals / matches_count, 2)
+            return goals_per_match
+        else:
+            return 0
+
+    @property
     def get_player_team_in_matchday(self, matchday):
         team = MatchDayTicket.objects.filter(player=self, matchday=matchday).values('team')
         return team
 
-    get_player_matches_played.short_description = 'Matches'
-    get_player_goals.short_description = 'Goals'
-    get_player_wins.short_description = 'Wins'
-    get_player_loses.short_description = 'Loses'
-    get_player_draws.short_description = 'Draws'
+    @property
+    def get_mvp_score(self, matchday):
+        """Returns the score of a player's mvp points in a given matchday. The mvp score is calculated based on wins, draws and goals scored. A win - 3pts, a draw - 1pts, a goal - 0.5pts."""
+
+        pass
 
     #Check if player already exists in database
     @property
@@ -79,12 +110,9 @@ class Player(models.Model):
         first_name = self.first_name.capitalize()
         last_name = self.last_name.capitalize()
 
-        print(f"first_name: {first_name}\nlast_name: {last_name}")
         if Player.objects.filter(first_name=first_name, last_name=last_name).exists():
-            print("istnieje")
             return False
         else:
-            print("nie istnieje")
             return True
 
     def clean(self):
