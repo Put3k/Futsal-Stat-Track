@@ -50,8 +50,12 @@ class Player(models.Model):
     @property
     def get_player_win_ratio(self):
         win_count = self.get_player_wins
+        draw_count = self.get_player_draws
         matches_played = self.get_player_matches_played
-        win_ratio = round((win_count/matches_played)*100)
+        if matches_played == 0:
+            win_ratio = 0
+        else:
+            win_ratio = round(((win_count+(draw_count/3))/matches_played)*100)
 
         return f"{win_ratio}%"
     
@@ -97,6 +101,20 @@ class Player(models.Model):
     def get_player_team_in_matchday(self, matchday):
         team = MatchDayTicket.objects.filter(player=self, matchday=matchday).values('team')
         return team
+
+    @property
+    def get_total_points(self):
+        stats_queryset = Stat.objects.filter(player=self)
+        goals_queryset = Stat.objects.filter(player=self).values_list('goals')
+
+        wins = self.get_player_wins
+        draws = self.get_player_draws
+        goals = self.get_player_goals
+
+        score = (wins*3 + draws + goals*0.5)
+
+        return score
+
 
     @property
     def get_mvp_score(self, matchday):
@@ -238,30 +256,31 @@ class Stat(models.Model):
         else:
             return True
 
-    @property
-    def goals_is_valid(self):
-        """Chceck if goals scored by player and other teammates sum up to goals declared in Match."""
+    #NOT IN USE SINCE TEAM_GOALS SUM UP AS GOALS SCORED BY PLAYERS
+    # @property
+    # def goals_is_valid(self):
+    #     """Chceck if goals scored by player and other teammates sum up to goals declared in Match."""
 
-        #set value of goals scored by team
-        if self.get_team == self.match.team_home:
-            goals_scored_by_team = self.match.home_goals
-        else:
-            goals_scored_by_team = self.match.away_goals
+    #     #set value of goals scored by team
+    #     if self.get_team == self.match.team_home:
+    #         goals_scored_by_team = self.match.home_goals
+    #     else:
+    #         goals_scored_by_team = self.match.away_goals
 
-        matchday = self.match.matchday
-        teammates_queryset = MatchDayTicket.objects.filter(matchday = matchday, team = self.get_team).values('player_id')
-        teammates = [Player.objects.get(pk=value['player_id']) for value in teammates_queryset]
-        goals_scored_by_teammates = 0
+    #     matchday = self.match.matchday
+    #     teammates_queryset = MatchDayTicket.objects.filter(matchday = matchday, team = self.get_team).values('player_id')
+    #     teammates = [Player.objects.get(pk=value['player_id']) for value in teammates_queryset]
+    #     goals_scored_by_teammates = 0
 
-        for player in teammates:
-            player_goals = player.get_player_goals_in_match(match = self.match)
-            if player_goals != None:
-                goals_scored_by_teammates += player_goals
+    #     for player in teammates:
+    #         player_goals = player.get_player_goals_in_match(match = self.match)
+    #         if player_goals != None:
+    #             goals_scored_by_teammates += player_goals
 
-        if self.goals > goals_scored_by_team - goals_scored_by_teammates:
-            return False
-        else:
-            return True
+    #     if self.goals > goals_scored_by_team - goals_scored_by_teammates:
+    #         return False
+    #     else:
+    #         return True
 
     @property
     def team_is_valid(self):
@@ -278,8 +297,8 @@ class Stat(models.Model):
             raise ValidationError(f'Stat for {self.player} in this match already exists.', code="invalid_player")
 
         #Goals validation
-        if not self.goals_is_valid:
-            raise ValidationError(f'Sum of the goals of the individual players is not equal the declared match goals - {self.player}', code="invalid_goal")
+        # if not self.goals_is_valid:
+        #     raise ValidationError(f'Sum of the goals of the individual players is not equal the declared match goals - {self.player}', code="invalid_goal")
 
         #Team exists in match validation
         if not self.team_is_valid:
