@@ -32,9 +32,37 @@ def players_list(request):
     return render(request, "stat_track/players_list.html", context)
 
 def matchday(request, matchday_id):
+
     matchday = get_object_or_404(MatchDay, pk=matchday_id)
     matches_in_matchday_list = Match.objects.filter(matchday=matchday_id)
-    context = {"matches_in_matchday_list": matches_in_matchday_list, "matchday": matchday}
+
+    tickets = MatchDayTicket.objects.filter(matchday=matchday)
+
+    team_blue = []
+    team_orange = []
+    team_colors = []
+
+    for ticket in tickets:
+        if ticket.team == "blue":
+            team_blue.append(ticket.player)
+
+
+        elif ticket.team == "orange":
+            team_orange.append(ticket.player)
+        elif ticket.team == "colors":
+            team_colors.append(ticket.player)
+
+
+
+    context = {
+        "matches_in_matchday_list": matches_in_matchday_list,
+        "matchday": matchday,
+        "tickets": tickets,
+        "team_blue": team_blue,
+        "team_orange": team_orange,
+        "team_colors": team_colors
+        }
+
     return render(request, "stat_track/matchday.html", context)
 
 def match_creator_matchday(request):

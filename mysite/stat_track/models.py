@@ -152,6 +152,19 @@ class MatchDay(models.Model):
     def __str__(self):
         return f"Matchday {self.date.strftime('%d-%m-%Y')}"
 
+    @property
+    def get_teams_stats_string(self):
+        """Generates list of stats as string to display it as list."""
+        match_list = Match.objects.filter(matchday=self)
+        stat_list = Stat.objects.filter(match__in=match_list)
+
+        blue_stats= [stat for stat in stat_list if stat.get_team == "blue"]
+        orange_stats = [stat for stat in stat_list if stat.get_team == "orange"]
+        colors_stats = [stat for stat in stat_list if stat.get_team == "colors"]
+
+        #IMPLEMENT FUNCTION TO GET STATS
+        return()
+
 class MatchDayTicket(models.Model):
     #Model to store data of players assigned to team in matchday
 
