@@ -32,10 +32,10 @@ def players_list(request):
     return render(request, "stat_track/players_list.html", context)
 
 def matchday(request, matchday_id):
-
     matchday = get_object_or_404(MatchDay, pk=matchday_id)
     matches_in_matchday_list = Match.objects.filter(matchday=matchday_id)
 
+    #Assign players to teams
     tickets = MatchDayTicket.objects.filter(matchday=matchday)
 
     team_blue = []
@@ -45,14 +45,27 @@ def matchday(request, matchday_id):
     for ticket in tickets:
         if ticket.team == "blue":
             team_blue.append(ticket.player)
-
-
         elif ticket.team == "orange":
             team_orange.append(ticket.player)
         elif ticket.team == "colors":
             team_colors.append(ticket.player)
 
+    #Present teams stats as list
 
+    blue_stats = []
+    orange_stats = []
+    colors_stats = []
+
+    team_stats = matchday.get_teams_stats_string
+    for team_name, team_data in team_stats.items():
+        for stat_name, stat_value in team_data.items():
+            stat_entry = f"{stat_name.capitalize()}: {stat_value}"
+            if team_name == "blue":
+                blue_stats.append(stat_entry)
+            elif team_name == "orange":
+                orange_stats.append(stat_entry)
+            elif team_name == "colors":
+                colors_stats.append(stat_entry)
 
     context = {
         "matches_in_matchday_list": matches_in_matchday_list,
@@ -60,7 +73,10 @@ def matchday(request, matchday_id):
         "tickets": tickets,
         "team_blue": team_blue,
         "team_orange": team_orange,
-        "team_colors": team_colors
+        "team_colors": team_colors,
+        "blue_stats": blue_stats,
+        "orange_stats": orange_stats,
+        "colors_stats": colors_stats
         }
 
     return render(request, "stat_track/matchday.html", context)

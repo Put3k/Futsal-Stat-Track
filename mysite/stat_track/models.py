@@ -152,18 +152,64 @@ class MatchDay(models.Model):
     def __str__(self):
         return f"Matchday {self.date.strftime('%d-%m-%Y')}"
 
+    #Generates list of stats as string to display it as list
     @property
     def get_teams_stats_string(self):
-        """Generates list of stats as string to display it as list."""
         match_list = Match.objects.filter(matchday=self)
         stat_list = Stat.objects.filter(match__in=match_list)
 
-        blue_stats= [stat for stat in stat_list if stat.get_team == "blue"]
-        orange_stats = [stat for stat in stat_list if stat.get_team == "orange"]
-        colors_stats = [stat for stat in stat_list if stat.get_team == "colors"]
+        team_stats = {
+            "blue":{
+                "wins":0,
+                "loses":0,
+                "draws":0,
+                "matches":0,
+                "points":0
+            },
+            "orange":{
+                "wins":0,
+                "loses":0,
+                "draws":0,
+                "matches":0,
+                "points":0
+            },
+            "colors":{
+                "wins":0,
+                "loses":0,
+                "draws":0,
+                "matches":0,
+                "points":0
+            }
+        }
 
-        #IMPLEMENT FUNCTION TO GET STATS
-        return()
+        for match in match_list:
+            home_team = match.team_home
+            away_team = match.team_away
+            result = match.result
+
+            team_stats[home_team]["matches"] += 1
+            team_stats[away_team]["matches"] += 1
+
+            if result == 0:
+                team_stats[home_team]["draws"] += 1
+                team_stats[home_team]["points"] += 1
+
+                team_stats[away_team]["draws"] += 1
+                team_stats[away_team]["points"] += 1
+
+            elif result == 1:
+                team_stats[home_team]["wins"] += 1
+                team_stats[home_team]["points"] += 3
+
+                team_stats[away_team]["loses"] += 1
+
+            elif result == 2:
+                team_stats[home_team]["loses"] += 1
+
+                team_stats[away_team]["wins"] += 1
+                team_stats[away_team]["points"] += 3
+        
+        return team_stats
 
 class MatchDayTicket(models.Model):
     #Model to store data of players assigned to team in matchday
@@ -205,6 +251,16 @@ class Match(models.Model):
             return self.team_home
         elif self.result == 2:
             return self.team_away
+        else:
+            return None
+
+    @property
+    def loser_team(self):
+        """returns color of losing team"""
+        if self.result == 1:
+            return self.team_away
+        elif self.result == 2:
+            return self.team_home
         else:
             return None
 

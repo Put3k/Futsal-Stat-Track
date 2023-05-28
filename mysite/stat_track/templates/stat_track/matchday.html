@@ -53,11 +53,9 @@
                     {% endfor %}
                 </ul>
                 <ul class="list-group">
-                    <li class="list-group-item bg-dark text-white">Wins: </li>
-                    <li class="list-group-item bg-dark text-white">Loses: </li>
-                    <li class="list-group-item bg-dark text-white">Draws: </li>
-                    <li class="list-group-item bg-dark text-white">Matches: </li>
-                    <li class="list-group-item bg-dark text-white">Points: </li>
+                    {% for stat in blue_stats %}
+                    <li class="list-group-item bg-dark text-white">{{ stat }}</li>
+                    {% endfor %}
                 </ul>
             </div>
             <div class="col">
@@ -68,11 +66,9 @@
                     {% endfor %}
                 </ul>
                 <ul class="list-group">
-                    <li class="list-group-item bg-dark text-white">Wins: </li>
-                    <li class="list-group-item bg-dark text-white">Loses: </li>
-                    <li class="list-group-item bg-dark text-white">Draws: </li>
-                    <li class="list-group-item bg-dark text-white">Matches: </li>
-                    <li class="list-group-item bg-dark text-white">Points: </li>
+                    {% for stat in orange_stats %}
+                    <li class="list-group-item bg-dark text-white">{{ stat }}</li>
+                    {% endfor %}
                 </ul>
             </div>
             <div class="col">
@@ -83,11 +79,9 @@
                     {% endfor %}
                 </ul>
                 <ul class="list-group">
-                    <li class="list-group-item bg-dark text-white">Wins: </li>
-                    <li class="list-group-item bg-dark text-white">Loses: </li>
-                    <li class="list-group-item bg-dark text-white">Draws: </li>
-                    <li class="list-group-item bg-dark text-white">Matches: </li>
-                    <li class="list-group-item bg-dark text-white">Points: </li>
+                    {% for stat in colors_stats %}
+                    <li class="list-group-item bg-dark text-white">{{ stat }}</li>
+                    {% endfor %}
                 </ul>
             </div>
           </div>
