@@ -12,6 +12,11 @@ class MatchAdmin(admin.ModelAdmin):
 class PlayerAdmin(admin.ModelAdmin):
     list_display = ('id', '__str__', 'get_player_matches_played', 'get_player_goals', 'get_player_wins', 'get_player_loses', 'get_player_draws')
 
+# class StatAdmin(admin.ModelAdmin):
+#     def clean_fields(self, request, obj):
+#         if self.model_admin:
+
+
 admin.site.register(MatchDay, MatchDayAdmin)
 admin.site.register(MatchDayTicket)
 admin.site.register(Match, MatchAdmin)

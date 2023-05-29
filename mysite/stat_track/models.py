@@ -1,6 +1,7 @@
 from django.db import models, transaction
 from django.db.models import Sum
 from django.db.models.signals import post_save, post_delete
+from django.contrib import admin
 from django.dispatch import receiver
 from django.core.exceptions import ValidationError
 from datetime import datetime
@@ -369,9 +370,10 @@ class Stat(models.Model):
         # if not self.goals_is_valid:
         #     raise ValidationError(f'Sum of the goals of the individual players is not equal the declared match goals - {self.player}', code="invalid_goal")
 
+        if not admin.site.is_registered(self.__class__):
         #Team exists in match validation
-        if not self.team_is_valid:
-            raise ValidationError(f'Team {self.get_team} does not appear in this match.', code="invalid_team")
+            if not self.team_is_valid:
+                raise ValidationError(f'Team {self.get_team} does not appear in this match.', code="invalid_team")
 
 
 @receiver(post_save, sender=Match)
