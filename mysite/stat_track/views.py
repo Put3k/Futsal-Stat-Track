@@ -7,6 +7,8 @@ from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.db import transaction
 
+from datetime import datetime, time
+
 def home(request):
     latest_match_day_list = MatchDay.objects.order_by("-date")[:5]
     players_list = Player.objects.all()
@@ -76,7 +78,7 @@ def matchday(request, matchday_id):
         "team_colors": team_colors,
         "blue_stats": blue_stats,
         "orange_stats": orange_stats,
-        "colors_stats": colors_stats
+        "colors_stats": colors_stats,
         }
 
     return render(request, "stat_track/matchday.html", context)
@@ -106,6 +108,16 @@ def match_creator_matchday(request):
             #Save MatchDay form and access instance of it.
             form = MatchDayForm(request.POST)
             if form.is_valid():
+
+                #get date data
+                date = form.cleaned_data['date']
+
+                #change datetime to 21:00
+                date = datetime.combine(date, time(21, 0))
+                
+                #replace form data with new data
+                form.cleaned_data['date'] = date
+
                 matchday = form.save()
 
             create_matchday_tickets(team_blue, matchday, "blue")

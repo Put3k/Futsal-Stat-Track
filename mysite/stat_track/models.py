@@ -4,7 +4,7 @@ from django.db.models.signals import post_save, post_delete
 from django.contrib import admin
 from django.dispatch import receiver
 from django.core.exceptions import ValidationError
-from datetime import datetime
+from datetime import datetime, time, date
 
 TEAM_CHOICES = (
     ("blue", "blue"),
@@ -38,6 +38,15 @@ class Player(models.Model):
             return total_goals
         else:
             return 0
+
+    def get_player_goals_in_matchday(self, matchday):
+        matches_list = list(Match.objects.filter(matchday=matchday).values_list(flat=True))
+        goals_queryset = Stat.objects.filter(player=self, match__in=matches_list).values_list('goals')
+
+        total_goals = goals_queryset.aggregate(Sum('goals'))['goals__sum'] or 0
+
+        return total_goals
+
 
     @property
     def get_player_wins(self):
@@ -147,7 +156,7 @@ class Player(models.Model):
 
 class MatchDay(models.Model):
 
-    date = models.DateTimeField("Date of match")
+    date = models.DateTimeField("Date of match", default=datetime.combine(date.today(), time(21, 0)))
     match_counter = models.PositiveIntegerField(default=0, )
 
     def __str__(self):
@@ -326,7 +335,7 @@ class Stat(models.Model):
         else:
             return True
 
-    #NOT IN USE SINCE TEAM_GOALS SUM UP AS GOALS SCORED BY PLAYERS
+    #NOT IN USE DUE TO TEAM_GOALS SUM UP AS GOALS SCORED BY PLAYERS
     # @property
     # def goals_is_valid(self):
     #     """Chceck if goals scored by player and other teammates sum up to goals declared in Match."""
@@ -351,6 +360,7 @@ class Stat(models.Model):
     #         return False
     #     else:
     #         return True
+
 
     @property
     def team_is_valid(self):
