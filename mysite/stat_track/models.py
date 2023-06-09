@@ -125,6 +125,15 @@ class Player(models.Model):
 
         return score
 
+    @property
+    def get_points_per_match(self):
+        points = self.get_total_points
+        matches_played = Stat.objects.filter(player=self).count()
+
+        points_per_match = round(points/matches_played, 2)
+
+        return points_per_match
+
 
     @property
     def get_mvp_score(self, matchday):

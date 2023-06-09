@@ -20,10 +20,11 @@
                     <th onclick="sortTable(5)" scope="col" data-type="number">Matches</th>
                     <th onclick="sortTable(6)" scope="col" data-type="number">Matchdays</th>
                     <th onclick="sortTable(7)" scope="col" data-type="number">Points</th>
-                    <th onclick="sortTable(8)" scope="col" data-type="number">Wins</th>
-                    <th onclick="sortTable(9)" scope="col" data-type="number">Loses</th>
-                    <th onclick="sortTable(10)" scope="col" data-type="number">Draws</th>
-                    <th onclick="sortTable(11)" scope="col" data-type="number">Win Ratio</th>
+                    <th onclick="sortTable(8)" scope="col" data-type="number">Points/Match</th>
+                    <th onclick="sortTable(9)" scope="col" data-type="number">Wins</th>
+                    <th onclick="sortTable(10)" scope="col" data-type="number">Loses</th>
+                    <th onclick="sortTable(11)" scope="col" data-type="number">Draws</th>
+                    <th onclick="sortTable(12)" scope="col" data-type="number">Win Ratio</th>
                 </tr>
             </thead>
             <tbody>
@@ -37,6 +38,7 @@
                     <td>{{ player.get_player_matches_played }}</td>
                     <td>{{ player.get_player_matchdays }}</td>
                     <td>{{ player.get_total_points }}</td>
+                    <td>{{ player.get_points_per_match }}</td>
                     <td>{{ player.get_player_wins }}</td>
                     <td>{{ player.get_player_loses }}</td>
                     <td>{{ player.get_player_draws }}</td>
