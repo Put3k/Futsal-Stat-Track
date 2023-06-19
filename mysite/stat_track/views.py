@@ -1,3 +1,5 @@
+import json
+
 from django.shortcuts import render, redirect, get_object_or_404
 from django.forms import formset_factory
 from django.urls import reverse
@@ -6,8 +8,15 @@ from .forms import MatchDayForm, MatchCreator, StatForm, PlayerForm
 from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.db import transaction
+from django.http import JsonResponse
 
 from datetime import datetime, time
+
+from rest_framework import generics
+from .serializers import PlayerSerializer
+
+
+
 
 def home(request):
     latest_match_day_list = MatchDay.objects.order_by("-date")[:5]
@@ -213,7 +222,7 @@ def delete_match(request, match_id):
     return redirect(f'/matchday/{matchday_id}/edit')
 
 
-# AJAX
+# AJAX to load players
 def load_players(request):
     matchday_id = request.GET.get('matchday_id')
     matchday = MatchDay.objects.get(pk=matchday_id)
@@ -245,3 +254,10 @@ def load_players(request):
         template_away = "stat_track/players_away_dropdown_list_options.html"
 
         return render(request, template_away, context_away)
+
+
+class PlayerDetailAPIView(generics.RetrieveAPIView):
+    queryset = Player.objects.all()
+    serializer_class = PlayerSerializer
+
+    # lookup_field = 'pk'

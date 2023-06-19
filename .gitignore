@@ -4,3 +4,4 @@ Stat_tracker_tabelka.xlsx
 db.sqlite3
 Django_Futsal_Stat_Tracker.code-workspace
 __pycache__
+/py_client

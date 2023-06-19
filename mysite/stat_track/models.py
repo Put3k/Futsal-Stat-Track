@@ -163,6 +163,10 @@ class Player(models.Model):
         self.full_clean()
         super(Player, self).save(*args, **kwargs)
 
+    
+    class Meta:
+        ordering = ['last_name']
+
 class MatchDay(models.Model):
 
     date = models.DateTimeField("Date of match", default=datetime.combine(date.today(), time(21, 0)))
@@ -229,6 +233,15 @@ class MatchDay(models.Model):
                 team_stats[away_team]["points"] += 3
         
         return team_stats
+
+
+        class Meta:
+            ordering = ['date']
+
+    @property
+    def players(self):
+        ticket_list = MatchDayTicket.objects.filter(matchday=self).values_list('player')
+        print(ticket_list)
 
 class MatchDayTicket(models.Model):
     #Model to store data of players assigned to team in matchday
@@ -298,6 +311,10 @@ class Match(models.Model):
 
     def __str__(self):
         return f"{self.match_in_matchday}-{self.matchday.date.strftime('%d-%m-%Y')}-{self.team_home}-{self.team_away}"
+
+
+    class Meta:
+        ordering = ['matchday']
 
 class Stat(models.Model):
 
