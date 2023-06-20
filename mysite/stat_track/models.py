@@ -130,7 +130,10 @@ class Player(models.Model):
         points = self.get_total_points
         matches_played = Stat.objects.filter(player=self).count()
 
-        points_per_match = round(points/matches_played, 2)
+        if matches_played > 0:
+            points_per_match = round(points/matches_played, 2)
+        else:
+            points_per_match = 0
 
         return points_per_match
 

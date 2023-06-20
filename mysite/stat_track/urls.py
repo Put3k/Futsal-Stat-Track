@@ -16,6 +16,4 @@ urlpatterns = [
     #AJAX Data Views
     path('ajax_load_players/', views.load_players, name='ajax_load_players'), #AJAX
 
-    #API View
-    path('<int:pk>/', views.PlayerDetailAPIView.as_view())
 ]

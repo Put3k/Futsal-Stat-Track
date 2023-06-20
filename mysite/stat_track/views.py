@@ -254,10 +254,3 @@ def load_players(request):
         template_away = "stat_track/players_away_dropdown_list_options.html"
 
         return render(request, template_away, context_away)
-
-
-class PlayerDetailAPIView(generics.RetrieveAPIView):
-    queryset = Player.objects.all()
-    serializer_class = PlayerSerializer
-
-    # lookup_field = 'pk'
