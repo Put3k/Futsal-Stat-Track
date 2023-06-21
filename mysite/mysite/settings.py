@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'rest_framework.authtoken',
     'stat_track.apps.StatTrackConfig',
     'users.apps.UsersConfig',
     "crispy_forms",
