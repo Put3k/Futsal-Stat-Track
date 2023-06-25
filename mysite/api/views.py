@@ -4,13 +4,11 @@ from django.forms.models import model_to_dict
 from django.shortcuts import get_object_or_404
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from rest_framework import authentication, generics, mixins, permissions
+from rest_framework import generics, mixins
 
-from .authentication import TokenAuthentication
-
-from stat_track.models import Match, Player
-from stat_track.permissions import IsStaffEditorPermission
-from stat_track.serializers import MatchSerializer, PlayerSerializer
+from stat_track.models import MatchDay, MatchDayTicket, Match, Player
+from stat_track.serializers import MatchDaySerializer, MatchSerializer, PlayerSerializer
+from .mixins import StaffEditorPermissionMixin
 
 
 @api_view(["POST"])
@@ -25,31 +23,34 @@ def api_home(request, *args, **kwargs):
         return Response(serializer.data)
 
 
-class PlayerListCreateAPIView(generics.ListCreateAPIView):
+
+"""
+PLAYER API VIEWS
+"""
+class PlayerListCreateAPIView(
+    StaffEditorPermissionMixin,
+    generics.ListCreateAPIView):
     queryset = Player.objects.all()
     serializer_class = PlayerSerializer
-    authentication_classes = [
-        authentication.SessionAuthentication,
-        TokenAuthentication
-        ]
-    permission_classes = [permissions.IsAdminUser, IsStaffEditorPermission]    # User permission authentication
     
 player_list_create_view = PlayerListCreateAPIView.as_view()
 
 
-class PlayerDetailAPIView(generics.RetrieveAPIView):
+class PlayerDetailAPIView(
+    StaffEditorPermissionMixin,
+    generics.RetrieveAPIView):
     queryset = Player.objects.all()
     serializer_class = PlayerSerializer
-    permission_classes = [permissions.DjangoModelPermissions]
 
 player_detail_view = PlayerDetailAPIView.as_view()
 
 
-class PlayerUpdateAPIView(generics.UpdateAPIView):
+class PlayerUpdateAPIView(
+    StaffEditorPermissionMixin,
+    generics.UpdateAPIView):
     queryset = Player.objects.all()
     serializer_class = PlayerSerializer
     lookup_field = 'pk'
-    permission_classes = [permissions.DjangoModelPermissions]
 
     def perform_update(self, serializer):
         instance = serializer.save()
@@ -57,11 +58,12 @@ class PlayerUpdateAPIView(generics.UpdateAPIView):
 player_update_view = PlayerUpdateAPIView.as_view()
 
 
-class PlayerDestroyAPIView(generics.DestroyAPIView):
+class PlayerDestroyAPIView(
+    StaffEditorPermissionMixin,
+    generics.DestroyAPIView):
     queryset = Player.objects.all()
     serializer_class = PlayerSerializer
     lookup_field = 'pk'
-    permission_classes = [permissions.DjangoModelPermissions]
 
     def perform_destroy(self, instance):
         super().perform_destroy(instance)
@@ -69,62 +71,97 @@ class PlayerDestroyAPIView(generics.DestroyAPIView):
 player_delete_view = PlayerDestroyAPIView.as_view()
 
 
-class PlayerMixinView(
-    mixins.DestroyModelMixin,
-    mixins.CreateModelMixin,
-    mixins.ListModelMixin,
-    mixins.RetrieveModelMixin,
-    generics.GenericAPIView
-    ):
+"""
+MATCH API VIEWS
+"""
+class MatchListCreateAPIView(
+    StaffEditorPermissionMixin,
+    generics.ListCreateAPIView):
+    queryset = Match.objects.all()
+    serializer_class = MatchSerializer
+    
+match_list_create_view = MatchListCreateAPIView.as_view()
 
-    queryset = Player.objects.all()
-    serializer_class = PlayerSerializer
+
+class MatchDetailAPIView(
+    StaffEditorPermissionMixin,
+    generics.RetrieveAPIView):
+    queryset = Match.objects.all()
+    serializer_class = MatchSerializer
+
+match_detail_view = MatchDetailAPIView.as_view()
+
+
+class MatchUpdateAPIView(
+    StaffEditorPermissionMixin,
+    generics.UpdateAPIView):
+    queryset = Match.objects.all()
+    serializer_class = MatchSerializer
     lookup_field = 'pk'
 
-    def post(self, request, *args, **kwargs):
-        return self.create(request, *args, **kwargs)
+    def perform_update(self, serializer):
+        instance = serializer.save()
 
-    def get(self, request, *args, **kwargs):    #HTTP -> get
-        pk = kwargs.get("pk")
-        if pk is not None:
-            return self.retrieve(request, *args, **kwargs)
-        return self.list(request, *args, **kwargs)
+match_update_view = MatchUpdateAPIView.as_view()
 
-    def put(self, request, *args, **kwargs):
-        return self.update(request, *args, **kwargs)
 
-    def delete(self, request, *args, **kwargs):
-        return self.destroy(request, *args, **kwargs)
+class MatchDestroyAPIView(
+    StaffEditorPermissionMixin,
+    generics.DestroyAPIView):
+    queryset = Match.objects.all()
+    serializer_class = MatchSerializer
+    lookup_field = 'pk'
 
-    # def post()
+    def perform_destroy(self, instance):
+        super().perform_destroy(instance)
 
-player_mixin_view = PlayerMixinView.as_view()
+match_delete_view = MatchDestroyAPIView.as_view()
 
-# One view to handle CREATE, LIST and DETAIL             # NOT IN USE
-@api_view(['GET', 'POST'])
-def player_alt_view(request, pk=None, *args, **kwargs):
-    method = request.method
 
-    if method == "GET":
-        if pk is not None:
-            # detail view
-            obj = get_object_or_404(Player, pk=pk)
-            data = PlayerSerializer(obj, many=False).data
-            return Response(data)
 
-        # list view
-        queryset = Player.objects.all()
-        data = PlayerSerializer(queryset, many=True).data
-        return Response(data)
+"""
+MATCHDAY API VIEWS
+"""
+class MatchDayListCreateAPIView(
+    StaffEditorPermissionMixin,
+    generics.ListCreateAPIView):
+    queryset = MatchDay.objects.all()
+    serializer_class = MatchDaySerializer
+    lookup_field = 'pk'
 
-    if method == "POST":
-        #create an item
-        serializer = PlayerSerializer(data=request.data)
-        if serializer.is_valid(raise_exception=True):
-            first_name = serializer.validated_data.get('first_name')
-            last_name = serializer.validated_data.get('last_name')
+matchday_list_create_view = MatchDayListCreateAPIView.as_view()
 
-            if Player.objects.filter(first_name=first_name, last_name=last_name).exists():
-                return Response({"invalid": "Player already exists"})
-            return Response(serializer.data)
-        return Response({"invalid": "not good data"}, status=400)
+
+class MatchDayDetailAPIView(
+    StaffEditorPermissionMixin,
+    generics.RetrieveAPIView):
+    queryset = MatchDay.objects.all()
+    serializer_class = MatchDaySerializer
+
+matchday_detail_view = MatchDayDetailAPIView.as_view()
+
+
+class MatchDayUpdateAPIView(
+    StaffEditorPermissionMixin,
+    generics.UpdateAPIView):
+    queryset = MatchDay.objects.all()
+    serializer_class = MatchDaySerializer
+    lookup_field = 'pk'
+
+    def perform_update(self, serializer):
+        instance = serializer.save()
+
+matchday_update_view = MatchDayUpdateAPIView.as_view()
+
+
+class MatchDayDestroyAPIView(
+    StaffEditorPermissionMixin,
+    generics.DestroyAPIView):
+    queryset = MatchDay.objects.all()
+    serializer_class = MatchDaySerializer
+    lookup_field = 'pk'
+
+    def perform_destroy(self, instance):
+        super().perform_destroy(instance)
+
+matchday_delete_view = MatchDayDestroyAPIView.as_view()

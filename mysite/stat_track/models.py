@@ -157,7 +157,7 @@ class Player(models.Model):
 
     def clean(self):
         if not self.player_is_valid:
-            raise ValidationError("Player already exists!")
+            raise ValidationError("Player already exists")
 
     #Override save method to save data with capital letters
     def save(self, *args, **kwargs):
@@ -244,7 +244,6 @@ class MatchDay(models.Model):
     @property
     def players(self):
         ticket_list = MatchDayTicket.objects.filter(matchday=self).values_list('player')
-        print(ticket_list)
 
 class MatchDayTicket(models.Model):
     #Model to store data of players assigned to team in matchday
