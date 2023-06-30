@@ -122,14 +122,24 @@ match_delete_view = MatchDestroyAPIView.as_view()
 """
 MATCHDAY API VIEWS
 """
-class MatchDayListCreateAPIView(
+class MatchDayCreateAPIView(
+    StaffEditorPermissionMixin,
+    generics.CreateAPIView):
+    queryset = MatchDay.objects.all()
+    serializer_class = MatchDaySerializer
+    lookup_field = 'pk'
+
+matchday_create_view = MatchDayCreateAPIView.as_view()
+
+
+class MatchDayListAPIView(
     StaffEditorPermissionMixin,
     generics.ListCreateAPIView):
     queryset = MatchDay.objects.all()
     serializer_class = MatchDaySerializer
     lookup_field = 'pk'
 
-matchday_list_create_view = MatchDayListCreateAPIView.as_view()
+matchday_list_view = MatchDayListAPIView.as_view()
 
 
 class MatchDayDetailAPIView(

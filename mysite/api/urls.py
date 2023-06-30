@@ -15,7 +15,8 @@ urlpatterns = [
     path('matches/<int:pk>/update/', views.match_update_view, name='match-edit'),
     path('matches/<int:pk>/delete/', views.match_delete_view, name='match-delete'),
 
-    path('matchdays/', views.matchday_list_create_view, name='matchday-list'),
+    path('matchdays/create/', views.matchday_create_view, name='matchday-create'),
+    path('matchdays/', views.matchday_list_view, name='matchday-list'),
     path('matchdays/<int:pk>/', views.matchday_detail_view, name='matchday-detail'),
     path('matchdays/<int:pk>/update/', views.matchday_update_view, name='matchday-update'),
     path('matchdays/<int:pk>/delete/', views.matchday_delete_view, name='matchday-delete'),
