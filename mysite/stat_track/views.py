@@ -92,6 +92,7 @@ def matchday(request, matchday_id):
 
     return render(request, "stat_track/matchday.html", context)
 
+@transaction.atomic
 def match_creator_matchday(request):
 
     def create_matchday_tickets(list_of_players, matchday, team):
@@ -150,7 +151,7 @@ def match_creator_matchday(request):
 
     return render(request, "stat_track/create_matchday.html", context)
 
-@transaction.atomic
+
 def edit_matchday(request, matchday_id):
 
     #get matchday
@@ -177,8 +178,8 @@ def edit_matchday(request, matchday_id):
         stat_list = []
         stat_counter = 0
 
-        with transaction.atomic():
-            try:
+        try:
+            with transaction.atomic():
                 match.full_clean()  # Validate match data
                 match.save()
 
@@ -192,9 +193,10 @@ def edit_matchday(request, matchday_id):
                         stat.full_clean()  # Validate stat data
                         stat.save()
 
-            except ValidationError as e:
-                for error_message in e:
-                    errors.append(error_message[1][0])
+        except ValidationError as e:
+            for error_message in e:
+                errors.append(error_message[1][0])
+
 
     #get match list for this matchday
     match_list = Match.objects.filter(matchday=matchday)

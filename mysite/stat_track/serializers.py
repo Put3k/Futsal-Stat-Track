@@ -3,6 +3,7 @@ from rest_framework.reverse import reverse
 from rest_framework.response import Response
 from rest_framework.exceptions import APIException
 from django.http import JsonResponse
+from django.db import transaction
 
 from .models import MatchDay, MatchDayTicket, Match, Player, Stat
 
@@ -96,6 +97,68 @@ class MatchSerializer(serializers.ModelSerializer):
             'winner_team',
             'goal_scorers'
         ]
+
+    def validate(self, data):
+        matchday_id = self.initial_data.get('matchday')
+        matchday = MatchDay.objects.get(pk=matchday_id)
+        if not matchday:
+            raise serializers.ValidationError({'matchday':f'Matchday {matchday_id} does not exists'})
+        
+        team_home = data['team_home']
+        team_away = data['team_away']
+
+        goal_scorers = self.initial_data.get('goal_scorers')
+        for scorer in goal_scorers:
+            if ("player_id" not in scorer.keys()) or ("goals" not in scorer.keys()):
+                raise serializers.ValidationError({'goal_scorers':'This field must contain "player_id" and "goals" key-value pairs'})
+            if scorer["player_id"] not in matchday.players_id:
+                raise serializers.ValidationError({'goal_scorers':f'Player with id:{scorer["player_id"]} does not appear in this matchday'})
+            
+            scorer_team = Player.objects.get(pk=scorer['player_id']).get_player_team_in_matchday
+            if not (scorer_team == team_home or scorer_team == team_away):
+                raise serializers.ValidationError({'goal_scorers': f'Player with id:{scorer["player_id"]} does not appear in teams assigned to this matchday'})
+
+
+    @transaction.atomic
+    def create(self, validated_data):
+        matchday_id = self.initial_data.get('matchday')
+        matchday = MatchDay.objects.get(pk=matchday_id)
+
+        players = matchday.players
+        goal_scorers = self.initial_data.get('goal_scorers')
+
+        match = Match.objects.create(**validated_data)
+
+
+        for player in players:
+            team = player.get_player_team_in_matchday(matchday=matchday)
+            if not (team == match.team_home or team == match.team_away):
+                continue
+
+            goals = 0
+
+            for i, scorer in enumerate(goal_scorers):
+                if scorer['player_id'] == player.id and scorer['goals'] > 0:
+                    goals = scorer['goals']
+                    goal_scorers.pop(i)
+                    break
+
+            stat = Stat.objects.create(player=player, match=match, goals=goals)
+            if team == match.team_home:
+                match.home_goals += goals
+                match.save()
+            elif team == match.team_away:
+                match.away_goals += goals
+                match.save()
+            else:
+                raise serializers.ValidationError(f"Player {player.id} does not appear in this match")
+            
+
+        if goal_scorers:
+            raise serializers.ValidationError(f"Player/s {goal_scorers} does not appear in this match")
+
+        return match
+
 
     def get_goal_scorers(self, obj):
         team_home = obj.team_home

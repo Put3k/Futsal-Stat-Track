@@ -107,9 +107,9 @@ class Player(models.Model):
         else:
             return 0
 
-    @property
     def get_player_team_in_matchday(self, matchday):
-        team = MatchDayTicket.objects.filter(player=self, matchday=matchday).values('team')
+        ticket = MatchDayTicket.objects.get(player=self, matchday=matchday)
+        team = ticket.team
         return team
 
     @property
@@ -136,13 +136,6 @@ class Player(models.Model):
             points_per_match = 0
 
         return points_per_match
-
-
-    @property
-    def get_mvp_score(self, matchday):
-        """Returns the score of a player's mvp points in a given matchday. The mvp score is calculated based on wins, draws and goals scored. A win - 3pts, a draw - 1pts, a goal - 0.5pts."""
-
-        pass
 
     #Check if player already exists in database
     @property
@@ -241,9 +234,18 @@ class MatchDay(models.Model):
         class Meta:
             ordering = ['date']
 
+    #Returns list of player instances assigned to this matchday
     @property
     def players(self):
-        ticket_list = MatchDayTicket.objects.filter(matchday=self).values_list('player')
+        tickets = MatchDayTicket.objects.filter(matchday=self)
+        players = [ticket.player for ticket in tickets]
+        return players
+
+    @property
+    def players_id(self):
+        tickets = MatchDayTicket.objects.filter(matchday=self)
+        players_ids = [ticket.player.id for ticket in tickets]
+        return players_ids
 
 class MatchDayTicket(models.Model):
     #Model to store data of players assigned to team in matchday
@@ -263,6 +265,7 @@ class Match(models.Model):
     home_goals = models.IntegerField(default=0)
     away_goals = models.IntegerField(default=0)
     match_in_matchday = models.IntegerField(default = 0)
+
 
     @property
     def score(self):
