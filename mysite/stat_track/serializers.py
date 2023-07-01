@@ -6,28 +6,22 @@ from django.http import JsonResponse
 
 from .models import MatchDay, MatchDayTicket, Match, Player, Stat
 
-# def required_field_exception(exc, context):
-#     response = exception_handler(exc, context)
-
-#     if response is not None:
-#         response.data['status_code'] = response.status_code
-
-#     return response
-
-def required(value):
-    if value is None:
-        raise serializers.ValidationError('This field is required')
 
 class MatchDaySerializer(serializers.ModelSerializer):
 
+    # Validate if teams field exists in POST data to avoid creating Matchdays with no Players
     def validate(self, data):
-        if not "teams" in data:
+        if not "teams" in self.initial_data:
             raise serializers.ValidationError({"teams": "This field is required"})
+
+        if not any(team in self.initial_data['teams'] for team in ['blue', 'orange', 'colors']):
+            raise serializers.ValidationError({"teams": "Teams are mandatory"})
+
         return data
 
 
-    # matches = serializers.SerializerMethodField(read_only=True)
-    # teams = serializers.SerializerMethodField()
+    #Serializer Fields
+    matches = serializers.SerializerMethodField()
     teams = serializers.SerializerMethodField()
 
     class Meta:
@@ -35,18 +29,20 @@ class MatchDaySerializer(serializers.ModelSerializer):
         fields = [
             'id',
             'date',
+            'matches',
             'teams',
         ]
 
+
+    #Returns match counter
     def get_matches(self, obj):
         if not hasattr(obj, 'id'):
             return None
         if not isinstance(obj, MatchDay):
             return None
-
         return obj.match_counter
 
-
+    #Return teams with list of players ids
     def get_teams(self, obj):
         tickets_dict = MatchDayTicket.objects.filter(matchday=obj).values('player_id', 'team')
 
@@ -72,11 +68,7 @@ class MatchDaySerializer(serializers.ModelSerializer):
 
 
     def create(self, validated_data):
-        print(validated_data)
         teams_data = self.initial_data.get('teams')
-
-        # if not teams_data:
-        #     raise APIException("Teams are required")
 
         matchday = MatchDay.objects.create(**validated_data)
 

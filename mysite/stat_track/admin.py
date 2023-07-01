@@ -3,7 +3,7 @@ from django import forms
 from .models import Match, MatchDay, MatchDayTicket, Player, Stat
 
 class MatchDayAdmin(admin.ModelAdmin):
-    list_display = ('id', '__str__')
+    list_display = ('id', '__str__', 'match_counter')
     readonly_fields = ('match_counter', )
 
 class MatchAdmin(admin.ModelAdmin):
