@@ -81,6 +81,9 @@ class MatchDaySerializer(serializers.ModelSerializer):
 
 class MatchSerializer(serializers.ModelSerializer):
     
+    #Serializer fields
+    goal_scorers = serializers.SerializerMethodField()
+
     class Meta:
         model = Match
         fields = [
@@ -91,7 +94,39 @@ class MatchSerializer(serializers.ModelSerializer):
             'home_goals',
             'away_goals',
             'winner_team',
+            'goal_scorers'
         ]
+
+    def get_goal_scorers(self, obj):
+        team_home = obj.team_home
+        team_away = obj.team_away
+        matchday = obj.matchday
+
+        team_home_players = MatchDayTicket.objects.filter(matchday=matchday, team=team_home).values('player_id')
+        team_away_players = MatchDayTicket.objects.filter(matchday=matchday, team=team_away).values('player_id')
+
+        goal_scorers = {team_home:[], team_away:[]}
+
+        for player in team_home_players:
+            player_id = player['player_id']
+            player_goals = Stat.objects.filter(player=player_id, match=obj).values('goals').first()
+            if player_goals is None or player_goals['goals'] == 0:
+                continue
+            player_dict = {**player, **player_goals}
+            goal_scorers[team_home].append(player_dict)
+
+
+        for player in team_away_players:
+            player_id = player['player_id']
+            player_goals = Stat.objects.filter(player=player_id, match=obj).values('goals').first()
+            if player_goals is None or player_goals['goals'] == 0:
+                continue
+            player_dict = {**player, **player_goals}
+            goal_scorers[team_away].append(player_dict)
+
+        return goal_scorers
+            
+
 
 class PlayerSerializer(serializers.ModelSerializer):
     matches_played = serializers.SerializerMethodField(read_only=True)

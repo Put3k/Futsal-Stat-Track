@@ -175,3 +175,9 @@ class MatchDayDestroyAPIView(
         super().perform_destroy(instance)
 
 matchday_delete_view = MatchDayDestroyAPIView.as_view()
+
+
+
+"""
+M
+"""
