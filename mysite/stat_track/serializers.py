@@ -7,6 +7,8 @@ from django.db import transaction
 
 from .models import MatchDay, MatchDayTicket, Match, Player, Stat
 
+import datetime
+
 
 class MatchDaySerializer(serializers.ModelSerializer):
 
@@ -114,21 +116,22 @@ class MatchSerializer(serializers.ModelSerializer):
             if scorer["player_id"] not in matchday.players_id:
                 raise serializers.ValidationError({'goal_scorers':f'Player with id:{scorer["player_id"]} does not appear in this matchday'})
             
-            scorer_team = Player.objects.get(pk=scorer['player_id']).get_player_team_in_matchday
+            scorer_team = Player.objects.get(id=scorer['player_id']).get_player_team_in_matchday(matchday=matchday)
             if not (scorer_team == team_home or scorer_team == team_away):
                 raise serializers.ValidationError({'goal_scorers': f'Player with id:{scorer["player_id"]} does not appear in teams assigned to this matchday'})
-
+        
+        return data
 
     @transaction.atomic
     def create(self, validated_data):
+
         matchday_id = self.initial_data.get('matchday')
         matchday = MatchDay.objects.get(pk=matchday_id)
 
         players = matchday.players
         goal_scorers = self.initial_data.get('goal_scorers')
-
+        
         match = Match.objects.create(**validated_data)
-
 
         for player in players:
             team = player.get_player_team_in_matchday(matchday=matchday)

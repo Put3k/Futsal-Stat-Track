@@ -165,7 +165,7 @@ class Player(models.Model):
 
 class MatchDay(models.Model):
 
-    date = models.DateTimeField("Date of match", default=datetime.combine(date.today(), time(21, 0)))
+    date = models.DateTimeField("Date of match", default=datetime.combine(date.today(), time(21, 0, 0)))
     match_counter = models.PositiveIntegerField(default=0, )
 
     def __str__(self):
@@ -246,6 +246,7 @@ class MatchDay(models.Model):
         tickets = MatchDayTicket.objects.filter(matchday=self)
         players_ids = [ticket.player.id for ticket in tickets]
         return players_ids
+        
 
 class MatchDayTicket(models.Model):
     #Model to store data of players assigned to team in matchday

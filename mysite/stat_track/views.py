@@ -10,7 +10,7 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.http import JsonResponse
 
-from datetime import datetime, time
+import datetime
 
 from rest_framework import generics
 from .serializers import PlayerSerializer
@@ -118,17 +118,16 @@ def match_creator_matchday(request):
             #Save MatchDay form and access instance of it.
             form = MatchDayForm(request.POST)
             if form.is_valid():
-
+                
                 #get date data
                 date = form.cleaned_data['date']
 
                 #change datetime to 21:00
-                date = datetime.combine(date, time(21, 0))
-                
-                #replace form data with new data
-                form.cleaned_data['date'] = date
+                modified_date = datetime.datetime(date.year, date.month, date.day, 21, 0, 0)
 
                 matchday = form.save()
+                matchday.date = modified_date
+                matchday.save()
 
             create_matchday_tickets(team_blue, matchday, "blue")
             create_matchday_tickets(team_orange, matchday, "orange")
