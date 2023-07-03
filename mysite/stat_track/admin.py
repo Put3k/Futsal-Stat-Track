@@ -1,6 +1,9 @@
 from django.contrib import admin
 from django import forms
-from .models import Match, MatchDay, MatchDayTicket, Player, Stat
+from .models import Match, MatchDay, MatchDayTicket, Player, Stat, League
+
+class LeagueAdmin(admin.ModelAdmin):
+    list_display = ('__str__', 'id', 'owner')
 
 class MatchDayAdmin(admin.ModelAdmin):
     list_display = ('id', '__str__', 'match_counter')
@@ -23,6 +26,7 @@ class PlayerAdmin(admin.ModelAdmin):
 #         if self.model_admin:
 
 
+admin.site.register(League, LeagueAdmin)
 admin.site.register(MatchDay, MatchDayAdmin)
 admin.site.register(MatchDayTicket, MatchDayTicketAdmin)
 admin.site.register(Match, MatchAdmin)

@@ -1,9 +1,11 @@
 from django.db import models, transaction
 from django.db.models import Sum
 from django.db.models.signals import post_save, post_delete
+from django.contrib.auth.models import User
 from django.contrib import admin
 from django.dispatch import receiver
 from django.core.exceptions import ValidationError
+from django.utils import timezone
 from datetime import datetime, time, date
 
 TEAM_CHOICES = (
@@ -11,11 +13,24 @@ TEAM_CHOICES = (
     ("orange", "orange"),
     ("colors", "colors")
 )
+class League(models.Model):
+    owner = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    name = models.CharField(max_length=64)
+    start_date = models.DateField(default=timezone.now)
+
+    def __str__(self):
+        return self.name
+
+    @property
+    def player_count(self):
+        pass
 
 class Player(models.Model):
 
     first_name = models.CharField(max_length = 16)
     last_name = models.CharField(max_length = 16)
+    user = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
+    leagues = models.ManyToManyField(League, )
 
     def __str__(self):
         return f"{self.first_name} {self.last_name}"
@@ -143,7 +158,10 @@ class Player(models.Model):
         first_name = self.first_name.capitalize()
         last_name = self.last_name.capitalize()
 
-        if Player.objects.filter(first_name=first_name, last_name=last_name).exists():
+        player_exists = Player.objects.filter(first_name=first_name, last_name=last_name).exists()
+        if player_exists:
+            player = Player.objects.get(first_name=first_name, last_name=last_name)
+        if player_exists and player != self:
             return False
         else:
             return True
@@ -165,7 +183,8 @@ class Player(models.Model):
 
 class MatchDay(models.Model):
 
-    date = models.DateTimeField("Date of match", default=datetime.combine(date.today(), time(21, 0, 0)))
+    league = models.ForeignKey(League, on_delete=models.SET_NULL, null=True)
+    date = models.DateTimeField("Date of match", default=datetime.now, blank=True)
     match_counter = models.PositiveIntegerField(default=0, )
 
     def __str__(self):
@@ -247,7 +266,6 @@ class MatchDay(models.Model):
         players_ids = [ticket.player.id for ticket in tickets]
         return players_ids
         
-
 class MatchDayTicket(models.Model):
     #Model to store data of players assigned to team in matchday
 
