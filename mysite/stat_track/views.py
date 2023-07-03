@@ -1,3 +1,5 @@
+import json
+
 from django.shortcuts import render, redirect, get_object_or_404
 from django.forms import formset_factory
 from django.urls import reverse
@@ -6,6 +8,15 @@ from .forms import MatchDayForm, MatchCreator, StatForm, PlayerForm
 from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.db import transaction
+from django.http import JsonResponse
+
+import datetime
+
+from rest_framework import generics
+from .serializers import PlayerSerializer
+
+
+
 
 def home(request):
     latest_match_day_list = MatchDay.objects.order_by("-date")[:5]
@@ -34,9 +45,54 @@ def players_list(request):
 def matchday(request, matchday_id):
     matchday = get_object_or_404(MatchDay, pk=matchday_id)
     matches_in_matchday_list = Match.objects.filter(matchday=matchday_id)
-    context = {"matches_in_matchday_list": matches_in_matchday_list, "matchday": matchday}
+
+    #Assign players to teams
+    tickets = MatchDayTicket.objects.filter(matchday=matchday)
+
+    team_blue = []
+    team_orange = []
+    team_colors = []
+
+    for ticket in tickets:
+        if ticket.team == "blue":
+            team_blue.append(ticket.player)
+        elif ticket.team == "orange":
+            team_orange.append(ticket.player)
+        elif ticket.team == "colors":
+            team_colors.append(ticket.player)
+
+    #Present teams stats as list
+
+    blue_stats = []
+    orange_stats = []
+    colors_stats = []
+
+    team_stats = matchday.get_teams_stats_string
+    for team_name, team_data in team_stats.items():
+        for stat_name, stat_value in team_data.items():
+            stat_entry = f"{stat_name.capitalize()}: {stat_value}"
+            if team_name == "blue":
+                blue_stats.append(stat_entry)
+            elif team_name == "orange":
+                orange_stats.append(stat_entry)
+            elif team_name == "colors":
+                colors_stats.append(stat_entry)
+
+    context = {
+        "matches_in_matchday_list": matches_in_matchday_list,
+        "matchday": matchday,
+        "tickets": tickets,
+        "team_blue": team_blue,
+        "team_orange": team_orange,
+        "team_colors": team_colors,
+        "blue_stats": blue_stats,
+        "orange_stats": orange_stats,
+        "colors_stats": colors_stats,
+        }
+
     return render(request, "stat_track/matchday.html", context)
 
+@transaction.atomic
 def match_creator_matchday(request):
 
     def create_matchday_tickets(list_of_players, matchday, team):
@@ -62,7 +118,16 @@ def match_creator_matchday(request):
             #Save MatchDay form and access instance of it.
             form = MatchDayForm(request.POST)
             if form.is_valid():
+                
+                #get date data
+                date = form.cleaned_data['date']
+
+                #change datetime to 21:00
+                modified_date = datetime.datetime(date.year, date.month, date.day, 21, 0, 0)
+
                 matchday = form.save()
+                matchday.date = modified_date
+                matchday.save()
 
             create_matchday_tickets(team_blue, matchday, "blue")
             create_matchday_tickets(team_orange, matchday, "orange")
@@ -85,7 +150,7 @@ def match_creator_matchday(request):
 
     return render(request, "stat_track/create_matchday.html", context)
 
-@transaction.atomic
+
 def edit_matchday(request, matchday_id):
 
     #get matchday
@@ -112,8 +177,8 @@ def edit_matchday(request, matchday_id):
         stat_list = []
         stat_counter = 0
 
-        with transaction.atomic():
-            try:
+        try:
+            with transaction.atomic():
                 match.full_clean()  # Validate match data
                 match.save()
 
@@ -127,9 +192,10 @@ def edit_matchday(request, matchday_id):
                         stat.full_clean()  # Validate stat data
                         stat.save()
 
-            except ValidationError as e:
-                for error_message in e:
-                    errors.append(error_message[1][0])
+        except ValidationError as e:
+            for error_message in e:
+                errors.append(error_message[1][0])
+
 
     #get match list for this matchday
     match_list = Match.objects.filter(matchday=matchday)
@@ -157,7 +223,7 @@ def delete_match(request, match_id):
     return redirect(f'/matchday/{matchday_id}/edit')
 
 
-# AJAX
+# AJAX to load players
 def load_players(request):
     matchday_id = request.GET.get('matchday_id')
     matchday = MatchDay.objects.get(pk=matchday_id)

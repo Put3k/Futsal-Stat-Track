@@ -1,9 +1,10 @@
 from django.db import models, transaction
 from django.db.models import Sum
 from django.db.models.signals import post_save, post_delete
+from django.contrib import admin
 from django.dispatch import receiver
 from django.core.exceptions import ValidationError
-from datetime import datetime
+from datetime import datetime, time, date
 
 TEAM_CHOICES = (
     ("blue", "blue"),
@@ -38,6 +39,15 @@ class Player(models.Model):
         else:
             return 0
 
+    def get_player_goals_in_matchday(self, matchday):
+        matches_list = list(Match.objects.filter(matchday=matchday).values_list(flat=True))
+        goals_queryset = Stat.objects.filter(player=self, match__in=matches_list).values_list('goals')
+
+        total_goals = goals_queryset.aggregate(Sum('goals'))['goals__sum'] or 0
+
+        return total_goals
+
+
     @property
     def get_player_wins(self):
         stats = Stat.objects.filter(player=self)
@@ -50,8 +60,12 @@ class Player(models.Model):
     @property
     def get_player_win_ratio(self):
         win_count = self.get_player_wins
+        draw_count = self.get_player_draws
         matches_played = self.get_player_matches_played
-        win_ratio = round((win_count/matches_played)*100)
+        if matches_played == 0:
+            win_ratio = 0
+        else:
+            win_ratio = round(((win_count+(draw_count/3))/matches_played)*100)
 
         return f"{win_ratio}%"
     
@@ -93,16 +107,35 @@ class Player(models.Model):
         else:
             return 0
 
-    @property
     def get_player_team_in_matchday(self, matchday):
-        team = MatchDayTicket.objects.filter(player=self, matchday=matchday).values('team')
+        ticket = MatchDayTicket.objects.get(player=self, matchday=matchday)
+        team = ticket.team
         return team
 
     @property
-    def get_mvp_score(self, matchday):
-        """Returns the score of a player's mvp points in a given matchday. The mvp score is calculated based on wins, draws and goals scored. A win - 3pts, a draw - 1pts, a goal - 0.5pts."""
+    def get_total_points(self):
+        stats_queryset = Stat.objects.filter(player=self)
+        goals_queryset = Stat.objects.filter(player=self).values_list('goals')
 
-        pass
+        wins = self.get_player_wins
+        draws = self.get_player_draws
+        goals = self.get_player_goals
+
+        score = (wins*3 + draws + goals*0.5)
+
+        return score
+
+    @property
+    def get_points_per_match(self):
+        points = self.get_total_points
+        matches_played = Stat.objects.filter(player=self).count()
+
+        if matches_played > 0:
+            points_per_match = round(points/matches_played, 2)
+        else:
+            points_per_match = 0
+
+        return points_per_match
 
     #Check if player already exists in database
     @property
@@ -117,7 +150,7 @@ class Player(models.Model):
 
     def clean(self):
         if not self.player_is_valid:
-            raise ValidationError("Player already exists!")
+            raise ValidationError("Player already exists")
 
     #Override save method to save data with capital letters
     def save(self, *args, **kwargs):
@@ -126,13 +159,94 @@ class Player(models.Model):
         self.full_clean()
         super(Player, self).save(*args, **kwargs)
 
+    
+    class Meta:
+        ordering = ['last_name']
+
 class MatchDay(models.Model):
 
-    date = models.DateTimeField("Date of match")
+    date = models.DateTimeField("Date of match", default=datetime.combine(date.today(), time(21, 0, 0)))
     match_counter = models.PositiveIntegerField(default=0, )
 
     def __str__(self):
         return f"Matchday {self.date.strftime('%d-%m-%Y')}"
+
+    #Generates list of stats as string to display it as list
+    @property
+    def get_teams_stats_string(self):
+        match_list = Match.objects.filter(matchday=self)
+        stat_list = Stat.objects.filter(match__in=match_list)
+
+        team_stats = {
+            "blue":{
+                "wins":0,
+                "loses":0,
+                "draws":0,
+                "matches":0,
+                "points":0
+            },
+            "orange":{
+                "wins":0,
+                "loses":0,
+                "draws":0,
+                "matches":0,
+                "points":0
+            },
+            "colors":{
+                "wins":0,
+                "loses":0,
+                "draws":0,
+                "matches":0,
+                "points":0
+            }
+        }
+
+        for match in match_list:
+            home_team = match.team_home
+            away_team = match.team_away
+            result = match.result
+
+            team_stats[home_team]["matches"] += 1
+            team_stats[away_team]["matches"] += 1
+
+            if result == 0:
+                team_stats[home_team]["draws"] += 1
+                team_stats[home_team]["points"] += 1
+
+                team_stats[away_team]["draws"] += 1
+                team_stats[away_team]["points"] += 1
+
+            elif result == 1:
+                team_stats[home_team]["wins"] += 1
+                team_stats[home_team]["points"] += 3
+
+                team_stats[away_team]["loses"] += 1
+
+            elif result == 2:
+                team_stats[home_team]["loses"] += 1
+
+                team_stats[away_team]["wins"] += 1
+                team_stats[away_team]["points"] += 3
+        
+        return team_stats
+
+
+        class Meta:
+            ordering = ['date']
+
+    #Returns list of player instances assigned to this matchday
+    @property
+    def players(self):
+        tickets = MatchDayTicket.objects.filter(matchday=self)
+        players = [ticket.player for ticket in tickets]
+        return players
+
+    @property
+    def players_id(self):
+        tickets = MatchDayTicket.objects.filter(matchday=self)
+        players_ids = [ticket.player.id for ticket in tickets]
+        return players_ids
+        
 
 class MatchDayTicket(models.Model):
     #Model to store data of players assigned to team in matchday
@@ -152,6 +266,7 @@ class Match(models.Model):
     home_goals = models.IntegerField(default=0)
     away_goals = models.IntegerField(default=0)
     match_in_matchday = models.IntegerField(default = 0)
+
 
     @property
     def score(self):
@@ -178,6 +293,16 @@ class Match(models.Model):
             return None
 
     @property
+    def loser_team(self):
+        """returns color of losing team"""
+        if self.result == 1:
+            return self.team_away
+        elif self.result == 2:
+            return self.team_home
+        else:
+            return None
+
+    @property
     def print_match(self):
         return f"{self.team_home.capitalize()} {self.home_goals} - {self.away_goals} {self.team_away.capitalize()}"
 
@@ -192,6 +317,10 @@ class Match(models.Model):
 
     def __str__(self):
         return f"{self.match_in_matchday}-{self.matchday.date.strftime('%d-%m-%Y')}-{self.team_home}-{self.team_away}"
+
+
+    class Meta:
+        ordering = ['matchday']
 
 class Stat(models.Model):
 
@@ -238,30 +367,32 @@ class Stat(models.Model):
         else:
             return True
 
-    @property
-    def goals_is_valid(self):
-        """Chceck if goals scored by player and other teammates sum up to goals declared in Match."""
+    #NOT IN USE DUE TO TEAM_GOALS SUM UP AS GOALS SCORED BY PLAYERS
+    # @property
+    # def goals_is_valid(self):
+    #     """Chceck if goals scored by player and other teammates sum up to goals declared in Match."""
 
-        #set value of goals scored by team
-        if self.get_team == self.match.team_home:
-            goals_scored_by_team = self.match.home_goals
-        else:
-            goals_scored_by_team = self.match.away_goals
+    #     #set value of goals scored by team
+    #     if self.get_team == self.match.team_home:
+    #         goals_scored_by_team = self.match.home_goals
+    #     else:
+    #         goals_scored_by_team = self.match.away_goals
 
-        matchday = self.match.matchday
-        teammates_queryset = MatchDayTicket.objects.filter(matchday = matchday, team = self.get_team).values('player_id')
-        teammates = [Player.objects.get(pk=value['player_id']) for value in teammates_queryset]
-        goals_scored_by_teammates = 0
+    #     matchday = self.match.matchday
+    #     teammates_queryset = MatchDayTicket.objects.filter(matchday = matchday, team = self.get_team).values('player_id')
+    #     teammates = [Player.objects.get(pk=value['player_id']) for value in teammates_queryset]
+    #     goals_scored_by_teammates = 0
 
-        for player in teammates:
-            player_goals = player.get_player_goals_in_match(match = self.match)
-            if player_goals != None:
-                goals_scored_by_teammates += player_goals
+    #     for player in teammates:
+    #         player_goals = player.get_player_goals_in_match(match = self.match)
+    #         if player_goals != None:
+    #             goals_scored_by_teammates += player_goals
 
-        if self.goals > goals_scored_by_team - goals_scored_by_teammates:
-            return False
-        else:
-            return True
+    #     if self.goals > goals_scored_by_team - goals_scored_by_teammates:
+    #         return False
+    #     else:
+    #         return True
+
 
     @property
     def team_is_valid(self):
@@ -278,12 +409,13 @@ class Stat(models.Model):
             raise ValidationError(f'Stat for {self.player} in this match already exists.', code="invalid_player")
 
         #Goals validation
-        if not self.goals_is_valid:
-            raise ValidationError(f'Sum of the goals of the individual players is not equal the declared match goals - {self.player}', code="invalid_goal")
+        # if not self.goals_is_valid:
+        #     raise ValidationError(f'Sum of the goals of the individual players is not equal the declared match goals - {self.player}', code="invalid_goal")
 
+        if not admin.site.is_registered(self.__class__):
         #Team exists in match validation
-        if not self.team_is_valid:
-            raise ValidationError(f'Team {self.get_team} does not appear in this match.', code="invalid_team")
+            if not self.team_is_valid:
+                raise ValidationError(f'Team {self.get_team} does not appear in this match.', code="invalid_team")
 
 
 @receiver(post_save, sender=Match)
