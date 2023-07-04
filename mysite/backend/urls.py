@@ -7,5 +7,5 @@ urlpatterns = [
     path('user/', include("django.contrib.auth.urls")),
     path('user/', include("users.urls")),
     path('api/', include("api.urls")),
-    path('api/v2/', include("mysite.routers"))
+    path('api/v2/', include("backend.routers"))
 ]

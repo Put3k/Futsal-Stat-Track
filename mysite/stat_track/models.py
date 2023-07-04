@@ -29,7 +29,7 @@ class Player(models.Model):
 
     first_name = models.CharField(max_length = 16)
     last_name = models.CharField(max_length = 16)
-    user = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
+    user = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL)
     leagues = models.ManyToManyField(League, )
 
     def __str__(self):

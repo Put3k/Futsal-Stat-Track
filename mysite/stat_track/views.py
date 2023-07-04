@@ -17,10 +17,11 @@ from .serializers import PlayerSerializer
 
 
 def home(request):
-    pass
+    if request.user.is_authenticated:
     #PLEASE login
 
     #if logged in: if len leagues == 1 otworzyć tą ligę, inaczej wybierz która ligą chcesz zarządzać
+        pass
 
 
 def league_home(request):
