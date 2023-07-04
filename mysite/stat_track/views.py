@@ -16,15 +16,22 @@ from rest_framework import generics
 from .serializers import PlayerSerializer
 
 
-
-
 def home(request):
+    if request.user.is_authenticated:
+    #PLEASE login
+
+    #if logged in: if len leagues == 1 otworzyć tą ligę, inaczej wybierz która ligą chcesz zarządzać
+        pass
+
+
+def league_home(request):
     latest_match_day_list = MatchDay.objects.order_by("-date")[:5]
     players_list = Player.objects.all()
-    players_list = sorted(players_list, key=lambda x: x.get_player_win_ratio, reverse=True)
+    players_list = sorted(players_list, key=lambda x: x.get_player_goals, reverse=True)[:5]
 
     context = {"latest_match_day_list": latest_match_day_list, "players_list": players_list}
     return render(request, "stat_track/home.html", context)
+
 
 def moderator_panel(request):
     return HttpResponse("Moderator Panel")

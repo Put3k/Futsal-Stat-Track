@@ -5,7 +5,8 @@ from . import views
 urlpatterns = [
     #HTML Views
     path("", views.home, name="home"),
-    path("moderator", views.moderator_panel, name="moderator_panel"), #not in use
+    # path("league", views.league_home, name="leagues_home"),
+    # path("league/<int:league_id>/", views.league_view, name="league_name"),
     path('player/<int:player_id>/', views.player_stats, name="player_stats"),
     path('players_list/', views.players_list, name="players_list" ),
     path('matchday/<int:matchday_id>/', views.matchday, name="matchday"),
